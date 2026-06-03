@@ -41,9 +41,10 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
         range.selectNodeContents(mark);
         const rects = Array.from(range.getClientRects());
 
-        // Pass all rects for this mark to the renderer
+        // Pass the mark element and rects to the renderer
+        // (mark element contains data-hue attribute if custom color is desired)
         if (rects.length > 0) {
-          renderer(ctx, rects);
+          renderer(ctx, rects, mark);
         }
       });
     };

@@ -3,9 +3,28 @@
  */
 
 /**
+ * Get color from mark element's data-hue attribute or use default color
+ * @param {HTMLElement} mark - The mark element
+ * @param {string} defaultColor - Default fill style (e.g., 'rgba(255, 255, 0, 0.4)')
+ * @param {number} defaultHue - Default hue value (0-360) if data-hue isn't specified
+ * @param {number} saturation - Saturation percentage (default 100)
+ * @param {number} lightness - Lightness percentage (default 50)
+ * @param {number} alpha - Alpha/opacity (default 0.4)
+ * @returns {string} Color value in HSL or the default color
+ */
+function getMarkColor(mark, defaultColor, defaultHue = 60, saturation = 100, lightness = 50, alpha = 0.4) {
+  const hueAttr = mark?.getAttribute('data-hue');
+  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : defaultHue;
+  return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+}
+
+/**
  * Simple rectangle renderer - draws basic filled rectangles
  */
-export function renderRectangle(ctx, rects) {
+export function renderRectangle(ctx, rects, mark) {
+  const defaultColor = 'rgba(255, 255, 0, 0.4)'; // Yellow fallback
+  const fillColor = getMarkColor(mark, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
+
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
     const x = rect.left + window.scrollX;
@@ -13,7 +32,7 @@ export function renderRectangle(ctx, rects) {
     const width = rect.width;
     const height = rect.height;
 
-    ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+    ctx.fillStyle = fillColor;
     ctx.fillRect(x, y, width, height);
   });
 }
@@ -25,9 +44,12 @@ export function renderRectangle(ctx, rects) {
  * - Slight angle variations for hand-drawn feel
  * - Multiple overlapping strokes for depth
  */
-export function renderMarker(ctx, rects) {
-  const markerColor = { r: 185, g: 255, b: 20 }; // Yellow
+export function renderMarker(ctx, rects, mark) {
   const baseOpacity = 0.25;
+
+  // Get hue from mark or use default yellow (60)
+  const hueAttr = mark?.getAttribute('data-hue');
+  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : 60;
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -48,27 +70,34 @@ export function renderMarker(ctx, rects) {
       const angle = (Math.random() - 0.5) * 0.02;
 
       // Draw the main stroke with gradient for soft edges
-      drawMarkerStroke(ctx, x, offsetY, width, markerHeight, angle, markerColor, baseOpacity);
+      drawMarkerStroke(ctx, x, offsetY, width, markerHeight, angle, hue, baseOpacity);
     }
   });
 }
 
 /**
  * Helper: Draw a single marker stroke with soft edges and variations
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {number} width - Width of the stroke
+ * @param {number} height - Height of the stroke
+ * @param {number} angle - Rotation angle in radians
+ * @param {number} hue - Hue value (0-360)
+ * @param {number} opacity - Opacity value (0-1)
  */
-function drawMarkerStroke(ctx, x, y, width, height, angle, color, opacity) {
+function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
   ctx.save();
 
   // Create gradient BEFORE translate with coordinates relative to the shape
   const gradient = ctx.createLinearGradient(0, -height / 2, 0, height / 2);
-  const rgba = `rgba(${color.r}, ${color.g}, ${color.b}`;
 
-  // Feather edges by fading opacity at top and bottom
-  gradient.addColorStop(0, `${rgba}, 0)`);
-  gradient.addColorStop(0.15, `${rgba}, ${opacity})`);
-  gradient.addColorStop(0.5, `${rgba}, ${opacity * 1.2})`);
-  gradient.addColorStop(0.85, `${rgba}, ${opacity})`);
-  gradient.addColorStop(1, `${rgba}, 0)`);
+  // Feather edges by fading opacity at top and bottom using HSL
+  gradient.addColorStop(0, `hsla(${hue}, 100%, 50%, 0)`);
+  gradient.addColorStop(0.15, `hsla(${hue}, 100%, 50%, ${opacity})`);
+  gradient.addColorStop(0.5, `hsla(${hue}, 100%, 50%, ${opacity * 1.2})`);
+  gradient.addColorStop(0.85, `hsla(${hue}, 100%, 50%, ${opacity})`);
+  gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
 
   ctx.translate(x, y);
 
@@ -110,10 +139,13 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, color, opacity) {
  * Pen/calligraphy renderer - draws with variable stroke width
  * based on direction, simulating a calligraphy pen
  */
-export function renderPen(ctx, rects) {
-  const penColor = { r: 0, g: 0, b: 220 }; // Black
+export function renderPen(ctx, rects, mark) {
   const baseOpacity = 0.6;
   const strokeWidth = 2;
+
+  // Get hue from mark or use default blue (240)
+  const hueAttr = mark?.getAttribute('data-hue');
+  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : 240;
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -122,8 +154,8 @@ export function renderPen(ctx, rects) {
     const width = rect.width;
     const height = rect.height;
 
-    // Draw underline-style
-    ctx.strokeStyle = `rgba(${penColor.r}, ${penColor.g}, ${penColor.b}, ${baseOpacity})`;
+    // Draw underline-style with HSL color
+    ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${baseOpacity})`;
     ctx.lineWidth = strokeWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';

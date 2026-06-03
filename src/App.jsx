@@ -39,22 +39,34 @@ export function App() {
           </p>
         </div>
 
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+          <strong>Custom Hue Support:</strong>
+          <p style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
+            Use the <code>data-hue</code> attribute on <code>&lt;mark&gt;</code> elements to set custom colors.
+            Hue values range from 0-360 (0=Red, 60=Yellow, 120=Green, 180=Cyan, 240=Blue, 300=Magenta).
+          </p>
+          <p>
+            Example: <mark data-hue="0">Red hue (0)</mark>, <mark data-hue="120">Green hue (120)</mark>,{' '}
+            <mark data-hue="240">Blue hue (240)</mark>, or <mark data-hue="300">Magenta hue (300)</mark>.
+          </p>
+        </div>
+
         <p>
           This is a demo of a <mark>canvas overlay</mark> that renders highlighter
           strokes above marked text.
         </p>
 
         <p>
-          The component scans for <mark>mark elements</mark> in the DOM and draws
-          over them on a canvas layer that sits <mark>above the document</mark>.
+          The component scans for <mark data-hue="120">mark elements</mark> in the DOM and draws
+          over them on a canvas layer that sits <mark data-hue="240">above the document</mark>.
         </p>
 
         <p>
-          Try scrolling down to see the overlay <mark>follow your scroll</mark> position.
+          Try scrolling down to see the overlay <mark data-hue="300">follow your scroll</mark> position.
         </p>
 
         <p>
-          <strong>Multi-line test:</strong> The component handles text that <mark>wraps across multiple
+          <strong>Multi-line test:</strong> The component handles text that <mark data-hue="30">wraps across multiple
           lines by using the Range API to get individual rectangles for each line</mark> of text.
           This gives accurate highlighting for longer marked sections regardless of the rendering mode.
         </p>
