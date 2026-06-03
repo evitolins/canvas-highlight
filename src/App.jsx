@@ -1,19 +1,51 @@
+import { useState } from 'react';
 import { CanvasOverlay } from './CanvasOverlay';
 
 export function App() {
+  const [renderMode, setRenderMode] = useState('rectangle');
+
   return (
     <>
-      <CanvasOverlay />
+      <CanvasOverlay renderMode={renderMode} />
+
       <div className="container">
         <h1>Canvas Overlay POC</h1>
 
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
+          <strong>Rendering Mode:</strong>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            {['rectangle', 'marker', 'pen'].map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setRenderMode(mode)}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: renderMode === mode ? '#007bff' : '#e0e0e0',
+                  color: renderMode === mode ? 'white' : 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: renderMode === mode ? 'bold' : 'normal',
+                }}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
+          <p style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+            {renderMode === 'rectangle' && 'Simple filled rectangles - precise and efficient'}
+            {renderMode === 'marker' && 'Realistic marker with soft edges and stroke variations'}
+            {renderMode === 'pen' && 'Pen/underline style with wavy strokes'}
+          </p>
+        </div>
+
         <p>
-          This is a simple demo of a <mark>canvas overlay</mark> that renders highlighter
+          This is a demo of a <mark>canvas overlay</mark> that renders highlighter
           strokes above marked text.
         </p>
 
         <p>
-          The component scans for <mark>mark elements</mark> in the DOM and draws rectangles
+          The component scans for <mark>mark elements</mark> in the DOM and draws
           over them on a canvas layer that sits <mark>above the document</mark>.
         </p>
 
@@ -22,9 +54,9 @@ export function App() {
         </p>
 
         <p>
-          <strong>Multi-line test:</strong> The component now handles text that <mark>wraps across multiple
+          <strong>Multi-line test:</strong> The component handles text that <mark>wraps across multiple
           lines by using the Range API to get individual rectangles for each line</mark> of text.
-          This gives much more accurate highlighting for longer marked sections.
+          This gives accurate highlighting for longer marked sections regardless of the rendering mode.
         </p>
 
         <p>

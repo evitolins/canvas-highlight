@@ -1,7 +1,20 @@
 import { useEffect, useRef } from 'react';
+import { renderRectangle, renderMarker, renderPen } from './renderers';
 
-export function CanvasOverlay() {
+const RENDER_MODES = {
+  rectangle: renderRectangle,
+  marker: renderMarker,
+  pen: renderPen,
+};
+
+/**
+ * Canvas overlay component that renders highlights above marked text
+ * @param {Object} props
+ * @param {string} props.renderMode - The rendering style: 'rectangle', 'marker', or 'pen'
+ */
+export function CanvasOverlay({ renderMode = 'rectangle' }) {
   const canvasRef = useRef(null);
+  const renderer = RENDER_MODES[renderMode] || renderRectangle;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -21,31 +34,16 @@ export function CanvasOverlay() {
       // Find all <mark> elements
       const marks = document.querySelectorAll('mark');
 
-      // Draw rectangles over each mark
+      // Render each mark using the selected renderer
       marks.forEach((mark) => {
         // Use Range API to get individual line rectangles for wrapped text
         const range = document.createRange();
         range.selectNodeContents(mark);
-        const rects = range.getClientRects();
+        const rects = Array.from(range.getClientRects());
 
-        // Draw a rectangle for each line of text
-        for (let i = 0; i < rects.length; i++) {
-          const rect = rects[i];
-
-          // Account for scroll position
-          const x = rect.left + window.scrollX;
-          const y = rect.top + window.scrollY;
-          const width = rect.width;
-          const height = rect.height;
-
-          // Draw yellow highlighter rectangle
-          ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
-          ctx.fillRect(x, y, width, height);
-
-          // Optional: draw border for visibility
-          // ctx.strokeStyle = 'rgba(255, 200, 0, 0.6)';
-          // ctx.lineWidth = 1;
-          // ctx.strokeRect(x, y, width, height);
+        // Pass all rects for this mark to the renderer
+        if (rects.length > 0) {
+          renderer(ctx, rects);
         }
       });
     };
@@ -74,7 +72,7 @@ export function CanvasOverlay() {
       window.removeEventListener('scroll', handleScroll);
       observer.disconnect();
     };
-  }, []);
+  }, [renderer]);
 
   return (
     <canvas
