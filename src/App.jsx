@@ -22,6 +22,12 @@ export function App() {
         </p>
 
         <p>
+          <strong>Multi-line test:</strong> The component now handles text that <mark>wraps across multiple
+          lines by using the Range API to get individual rectangles for each line</mark> of text.
+          This gives much more accurate highlighting for longer marked sections.
+        </p>
+
+        <p>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do <mark>eiusmod tempor</mark>{' '}
           incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
           exercitation ullamco laboris.

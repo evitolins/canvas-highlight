@@ -23,22 +23,30 @@ export function CanvasOverlay() {
 
       // Draw rectangles over each mark
       marks.forEach((mark) => {
-        const rect = mark.getBoundingClientRect();
+        // Use Range API to get individual line rectangles for wrapped text
+        const range = document.createRange();
+        range.selectNodeContents(mark);
+        const rects = range.getClientRects();
 
-        // Account for scroll position
-        const x = rect.left + window.scrollX;
-        const y = rect.top + window.scrollY;
-        const width = rect.width;
-        const height = rect.height;
+        // Draw a rectangle for each line of text
+        for (let i = 0; i < rects.length; i++) {
+          const rect = rects[i];
 
-        // Draw yellow highlighter rectangle
-        ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
-        ctx.fillRect(x, y, width, height);
+          // Account for scroll position
+          const x = rect.left + window.scrollX;
+          const y = rect.top + window.scrollY;
+          const width = rect.width;
+          const height = rect.height;
 
-        // Optional: draw border for visibility
-        ctx.strokeStyle = 'rgba(255, 200, 0, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, width, height);
+          // Draw yellow highlighter rectangle
+          ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+          ctx.fillRect(x, y, width, height);
+
+          // Optional: draw border for visibility
+          // ctx.strokeStyle = 'rgba(255, 200, 0, 0.6)';
+          // ctx.lineWidth = 1;
+          // ctx.strokeRect(x, y, width, height);
+        }
       });
     };
 
