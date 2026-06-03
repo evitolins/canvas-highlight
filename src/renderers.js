@@ -7,10 +7,9 @@
  */
 export function renderRectangle(ctx, rects) {
   rects.forEach((rect) => {
-    // getBoundingClientRect() already returns viewport-relative coordinates
-    // No need to add scroll offset since canvas is position: fixed
-    const x = rect.left;
-    const y = rect.top;
+    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
+    const x = rect.left + window.scrollX;
+    const y = rect.top + window.scrollY;
     const width = rect.width;
     const height = rect.height;
 
@@ -31,10 +30,9 @@ export function renderMarker(ctx, rects) {
   const baseOpacity = 0.25;
 
   rects.forEach((rect) => {
-    // getBoundingClientRect() already returns viewport-relative coordinates
-    // No need to add scroll offset since canvas is position: fixed
-    const x = rect.left;
-    const y = rect.top;
+    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
+    const x = rect.left + window.scrollX;
+    const y = rect.top + window.scrollY;
     const width = rect.width;
     const height = rect.height;
 
@@ -118,8 +116,9 @@ export function renderPen(ctx, rects) {
   const strokeWidth = 2;
 
   rects.forEach((rect) => {
-    const x = rect.left;
-    const y = rect.top;
+    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
+    const x = rect.left + window.scrollX;
+    const y = rect.top + window.scrollY;
     const width = rect.width;
     const height = rect.height;
 

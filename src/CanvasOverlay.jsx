@@ -24,9 +24,9 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
     if (!ctx) return;
 
     const updateCanvas = () => {
-      // Set canvas size to match window
+      // Set canvas to match viewport width and full document height
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.height = document.documentElement.scrollHeight;
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -51,13 +51,9 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
     // Initial draw
     updateCanvas();
 
-    // Redraw on window resize
+    // Redraw on window resize (which may change content layout)
     const handleResize = () => updateCanvas();
     window.addEventListener('resize', handleResize);
-
-    // Redraw on scroll
-    const handleScroll = () => updateCanvas();
-    window.addEventListener('scroll', handleScroll);
 
     // Use MutationObserver to redraw when DOM changes
     const observer = new MutationObserver(() => updateCanvas());
@@ -69,7 +65,6 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
       observer.disconnect();
     };
   }, [renderer]);
@@ -78,7 +73,7 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
     <canvas
       ref={canvasRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
         pointerEvents: 'none',
