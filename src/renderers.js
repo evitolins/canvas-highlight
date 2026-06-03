@@ -110,12 +110,14 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
   ctx.fillStyle = gradient;
 
   // Add roughness to the edges for hand-drawn feel
-  const roughness = 2;
+  const roughness = 3.5; // Increased for more vertical variation
+  const edgePointSpacing = 1.5; // More frequent sampling for jagged edges
+
   ctx.beginPath();
   ctx.moveTo(0, -height / 2);
 
-  // Rough top edge
-  for (let i = 0; i <= width; i += 3) {
+  // Rough top edge with more variation
+  for (let i = 0; i <= width; i += edgePointSpacing) {
     const yVar = (Math.random() - 0.5) * roughness;
     ctx.lineTo(i, -height / 2 + yVar);
   }
@@ -123,14 +125,38 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
   // Right side
   ctx.lineTo(width, height / 2);
 
-  // Rough bottom edge (reversed for closed path)
-  for (let i = width; i >= 0; i -= 3) {
+  // Rough bottom edge (reversed for closed path) with more variation
+  for (let i = width; i >= 0; i -= edgePointSpacing) {
     const yVar = (Math.random() - 0.5) * roughness;
     ctx.lineTo(i, height / 2 + yVar);
   }
 
   ctx.closePath();
   ctx.fill();
+
+  const includeDetails = false;
+  if (includeDetails) {
+    // Add darker caps at beginning and end for ink bleed effect (3-10% of width)
+    const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
+
+    // Left edge cap (darker, more opaque) - reduced effect by 20%
+    const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
+    leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
+    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 1.04})`);
+    leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
+
+    ctx.fillStyle = leftCapGradient;
+    ctx.fillRect(0, -height / 2, capWidth, height);
+
+    // Right edge cap (darker, more opaque) - reduced effect by 20%
+    const rightCapGradient = ctx.createLinearGradient(width - capWidth, -height / 2, width + capWidth, -height / 2);
+    rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
+    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 1.04})`);
+    rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
+
+    ctx.fillStyle = rightCapGradient;
+    ctx.fillRect(width - capWidth, -height / 2, capWidth, height);
+  }
 
   ctx.restore();
 }
