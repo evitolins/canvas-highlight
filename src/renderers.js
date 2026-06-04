@@ -93,11 +93,11 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
   const gradient = ctx.createLinearGradient(0, -height / 2, 0, height / 2);
 
   // Feather edges by fading opacity at top and bottom using HSL
-  gradient.addColorStop(0, `hsla(${hue}, 100%, 50%, 0)`);
-  gradient.addColorStop(0.15, `hsla(${hue}, 100%, 50%, ${opacity})`);
-  gradient.addColorStop(0.5, `hsla(${hue}, 100%, 50%, ${opacity * 1.2})`);
-  gradient.addColorStop(0.85, `hsla(${hue}, 100%, 50%, ${opacity})`);
-  gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
+  gradient.addColorStop(0, `hsla(${hue}, 100%, 80%, 0)`);
+  gradient.addColorStop(0.15, `hsla(${hue}, 100%, 80%, ${opacity})`);
+  gradient.addColorStop(0.5, `hsla(${hue}, 100%, 80%, ${opacity * 1.2})`);
+  gradient.addColorStop(0.85, `hsla(${hue}, 100%, 80%, ${opacity})`);
+  gradient.addColorStop(1, `hsla(${hue}, 100%, 80%, 0)`);
 
   ctx.translate(x, y);
 
@@ -110,31 +110,43 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
   ctx.fillStyle = gradient;
 
   // Add roughness to the edges for hand-drawn feel
-  const roughness = 3.5; // Increased for more vertical variation
+  const roughness = 1.5; // Increased for more vertical variation
   const edgePointSpacing = 1.5; // More frequent sampling for jagged edges
+
+  // Pen angle effect - varies along the stroke length
+  // Higher angle at start, lower at end, creating a natural pen-angle appearance
+  const penAngleStart = (Math.random() - 0.5) * height * 1.9; // Angle variation at start
+  const penAngleEnd = (Math.random() - 0.5) * height * 1.9; // Different angle at end
 
   ctx.beginPath();
   ctx.moveTo(0, -height / 2);
 
-  // Rough top edge with more variation
+  // Rough top edge with more variation and pen angle
   for (let i = 0; i <= width; i += edgePointSpacing) {
     const yVar = (Math.random() - 0.5) * roughness;
-    ctx.lineTo(i, -height / 2 + yVar);
+    // Interpolate pen angle from start to end
+    const progress = i / width;
+    const penAngle = penAngleStart + (penAngleEnd - penAngleStart) * progress;
+    ctx.lineTo(i, -height / 2 + yVar + penAngle * 0.3);
   }
 
-  // Right side
-  ctx.lineTo(width, height / 2);
+  // Right side - angled to favor left (pen angle)
+  const rightEdgeAngle = penAngleEnd * 0.6;
+  ctx.lineTo(width, height / 2 + rightEdgeAngle);
 
-  // Rough bottom edge (reversed for closed path) with more variation
+  // Rough bottom edge (reversed for closed path) with more variation and pen angle
   for (let i = width; i >= 0; i -= edgePointSpacing) {
     const yVar = (Math.random() - 0.5) * roughness;
-    ctx.lineTo(i, height / 2 + yVar);
+    // Interpolate pen angle from end to start
+    const progress = (width - i) / width;
+    const penAngle = penAngleEnd + (penAngleStart - penAngleEnd) * progress;
+    ctx.lineTo(i, height / 2 + yVar + penAngle * 0.3);
   }
 
   ctx.closePath();
   ctx.fill();
 
-  const includeDetails = false;
+  const includeDetails = true;
   if (includeDetails) {
     // Add darker caps at beginning and end for ink bleed effect (3-10% of width)
     const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
@@ -142,7 +154,7 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
     // Left edge cap (darker, more opaque) - reduced effect by 20%
     const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
     leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 1.04})`);
+    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * .84})`);
     leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = leftCapGradient;
@@ -151,7 +163,7 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
     // Right edge cap (darker, more opaque) - reduced effect by 20%
     const rightCapGradient = ctx.createLinearGradient(width - capWidth, -height / 2, width + capWidth, -height / 2);
     rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 1.04})`);
+    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * .5})`);
     rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = rightCapGradient;
@@ -172,6 +184,7 @@ export function renderPen(ctx, rects, mark) {
   // Get hue from mark or use default blue (240)
   const hueAttr = mark?.getAttribute('data-hue');
   const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : 240;
+  const seed = Math.random() * 10;
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -190,10 +203,10 @@ export function renderPen(ctx, rects, mark) {
     ctx.beginPath();
     ctx.moveTo(x, y + height + 2);
 
-    const waveAmplitude = 1.5;
+    const waveAmplitude = 1.2;
     const waveFrequency = 0.05;
     for (let i = 0; i <= width; i += 2) {
-      const waveOffset = Math.sin(i * waveFrequency) * waveAmplitude;
+      const waveOffset = Math.sin(i * waveFrequency + seed) * waveAmplitude;
       ctx.lineTo(x + i, y + height + 2 + waveOffset);
     }
 
