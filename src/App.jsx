@@ -14,7 +14,7 @@ export function App() {
         <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
           <strong>Rendering Mode:</strong>
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            {['rectangle', 'marker', 'pen'].map((mode) => (
+            {['rectangle', 'marker', 'pen', 'penScribble'].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setRenderMode(mode)}
@@ -36,6 +36,7 @@ export function App() {
             {renderMode === 'rectangle' && 'Simple filled rectangles - precise and efficient'}
             {renderMode === 'marker' && 'Realistic marker with soft edges and stroke variations'}
             {renderMode === 'pen' && 'Pen/underline style with wavy strokes'}
+            {renderMode === 'penScribble' && 'Pen scribble — high-frequency waves drawn over the text'}
           </p>
         </div>
 

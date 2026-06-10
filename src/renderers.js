@@ -12,9 +12,19 @@
  * @param {number} alpha - Alpha/opacity (default 0.4)
  * @returns {string} Color value in HSL or the default color
  */
-function getMarkColor(mark, defaultColor, defaultHue = 60, saturation = 100, lightness = 50, alpha = 0.4) {
-  const hueAttr = mark?.getAttribute('data-hue');
-  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : defaultHue;
+function getMarkColor(
+  mark,
+  defaultColor,
+  defaultHue = 60,
+  saturation = 100,
+  lightness = 50,
+  alpha = 0.4,
+) {
+  const hueAttr = mark?.getAttribute("data-hue");
+  const hue =
+    hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
+      ? parseFloat(hueAttr)
+      : defaultHue;
   return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
 }
 
@@ -22,7 +32,7 @@ function getMarkColor(mark, defaultColor, defaultHue = 60, saturation = 100, lig
  * Simple rectangle renderer - draws basic filled rectangles
  */
 export function renderRectangle(ctx, rects, mark) {
-  const defaultColor = 'rgba(255, 255, 0, 0.4)'; // Yellow fallback
+  const defaultColor = "rgba(255, 255, 0, 0.4)"; // Yellow fallback
   const fillColor = getMarkColor(mark, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
 
   rects.forEach((rect) => {
@@ -48,8 +58,11 @@ export function renderMarker(ctx, rects, mark) {
   const baseOpacity = 0.25;
 
   // Get hue from mark or use default yellow (60)
-  const hueAttr = mark?.getAttribute('data-hue');
-  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : 60;
+  const hueAttr = mark?.getAttribute("data-hue");
+  const hue =
+    hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
+      ? parseFloat(hueAttr)
+      : 60;
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -70,7 +83,16 @@ export function renderMarker(ctx, rects, mark) {
       const angle = (Math.random() - 0.5) * 0.02;
 
       // Draw the main stroke with gradient for soft edges
-      drawMarkerStroke(ctx, x, offsetY, width, markerHeight, angle, hue, baseOpacity);
+      drawMarkerStroke(
+        ctx,
+        x,
+        offsetY,
+        width,
+        markerHeight,
+        angle,
+        hue,
+        baseOpacity,
+      );
     }
   });
 }
@@ -152,18 +174,34 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
     const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
 
     // Left edge cap (darker, more opaque) - reduced effect by 20%
-    const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
+    const leftCapGradient = ctx.createLinearGradient(
+      -capWidth,
+      -height / 2,
+      capWidth,
+      -height / 2,
+    );
     leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * .84})`);
+    leftCapGradient.addColorStop(
+      0.5,
+      `hsla(${hue}, 100%, 40%, ${opacity * 0.84})`,
+    );
     leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = leftCapGradient;
     ctx.fillRect(0, -height / 2, capWidth, height);
 
     // Right edge cap (darker, more opaque) - reduced effect by 20%
-    const rightCapGradient = ctx.createLinearGradient(width - capWidth, -height / 2, width + capWidth, -height / 2);
+    const rightCapGradient = ctx.createLinearGradient(
+      width - capWidth,
+      -height / 2,
+      width + capWidth,
+      -height / 2,
+    );
     rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * .5})`);
+    rightCapGradient.addColorStop(
+      0.5,
+      `hsla(${hue}, 100%, 40%, ${opacity * 0.5})`,
+    );
     rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = rightCapGradient;
@@ -174,42 +212,93 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
 }
 
 /**
- * Pen/calligraphy renderer - draws with variable stroke width
- * based on direction, simulating a calligraphy pen
+ * Factory that produces a pen renderer from a style config.
+ * @param {Object} config
+ * @param {function} config.getBaseY   - (y, height, passIndex, totalPasses) => number
+ * @param {number|function} config.getAmplitude - pixels, or (height) => pixels
+ * @param {number} config.frequency    - angular frequency in radians/pixel
+ * @param {number} config.passCount    - number of overlapping strokes per rect
+ * @param {number} config.strokeWidth
+ * @param {number} config.baseOpacity
+ * @param {number} config.defaultHue
  */
-export function renderPen(ctx, rects, mark) {
-  const baseOpacity = 0.6;
-  const strokeWidth = 2;
+function createPenRenderer({
+  getBaseY,
+  getAmplitude,
+  frequency,
+  passCount,
+  strokeWidth,
+  baseOpacity,
+  defaultHue = 240,
+}) {
+  return function (ctx, rects, mark) {
+    const hueAttr = mark?.getAttribute("data-hue");
+    const hue =
+      hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
+        ? parseFloat(hueAttr)
+        : defaultHue;
+    const seed = Math.random() * 10;
 
-  // Get hue from mark or use default blue (240)
-  const hueAttr = mark?.getAttribute('data-hue');
-  const hue = hueAttr !== null && hueAttr !== undefined && hueAttr !== '' ? parseFloat(hueAttr) : 240;
-  const seed = Math.random() * 10;
+    rects.forEach((rect) => {
+      const x = rect.left + window.scrollX;
+      const y = rect.top + window.scrollY;
+      const width = rect.width;
+      const height = rect.height;
 
-  rects.forEach((rect) => {
-    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
-    const x = rect.left + window.scrollX;
-    const y = rect.top + window.scrollY;
-    const width = rect.width;
-    const height = rect.height;
+      ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${baseOpacity})`;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-    // Draw underline-style with HSL color
-    ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${baseOpacity})`;
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+      const amplitude =
+        typeof getAmplitude === "function"
+          ? getAmplitude(height)
+          : getAmplitude;
 
-    // Wavy underline
-    ctx.beginPath();
-    ctx.moveTo(x, y + height + 2);
+      for (let p = 0; p < passCount; p++) {
+        const passSeed = seed + p * 3.7;
+        const baseY = getBaseY(y, height, p, passCount);
 
-    const waveAmplitude = 1.2;
-    const waveFrequency = 0.05;
-    for (let i = 0; i <= width; i += 2) {
-      const waveOffset = Math.sin(i * waveFrequency + seed) * waveAmplitude;
-      ctx.lineTo(x + i, y + height + 2 + waveOffset);
-    }
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
 
-    ctx.stroke();
-  });
+        for (let i = 0; i <= width; i += 2) {
+          ctx.lineTo(
+            x + i,
+            baseY + Math.sin(i * frequency + passSeed) * amplitude,
+          );
+        }
+
+        ctx.stroke();
+      }
+    });
+  };
 }
+
+/**
+ * Pen renderer - wavy underline below the text
+ */
+export const renderPen = createPenRenderer({
+  getBaseY: (y, height) => y + height + 2,
+  getAmplitude: 1.2,
+  frequency: 0.05,
+  passCount: 1,
+  strokeWidth: 2,
+  baseOpacity: 0.6,
+});
+
+/**
+ * Pen scribble renderer - high-frequency waves drawn over the text,
+ * spanning the full text height across multiple passes.
+ */
+export const renderPenScribble = createPenRenderer({
+  // Distribute passes evenly across the text height so combined coverage exceeds it
+  getBaseY: (y, height, p, total) =>
+    y + height / 2 + (p / Math.max(total - 1, 1) - 0.5) * height * 0.5,
+  // Amplitude slightly exceeds half the text height so the wave clips beyond text bounds
+  getAmplitude: (height) => height * 0.32,
+  frequency: 0.3,
+  passCount: 5,
+  strokeWidth: 1.5,
+  baseOpacity: 0.45,
+});

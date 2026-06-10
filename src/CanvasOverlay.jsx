@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { renderRectangle, renderMarker, renderPen } from './renderers';
+import { renderRectangle, renderMarker, renderPen, renderPenScribble } from './renderers';
 
 const RENDER_MODES = {
   rectangle: renderRectangle,
   marker: renderMarker,
   pen: renderPen,
+  penScribble: renderPenScribble,
 };
 
 /**
