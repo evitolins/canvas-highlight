@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'src/index.ts',
-      name: 'CanvasOverlay',
+      name: 'CanvasHighlight',
       formats: ['es', 'cjs'],
       fileName: (format) => `canvas-highlight.${format === 'es' ? 'js' : 'cjs'}`,
     },
