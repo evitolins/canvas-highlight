@@ -1,4 +1,4 @@
-# AGENTS.md — CanvasOverlay
+# AGENTS.md — canvas-highlight
 
 Guide for AI agents working in this repository.
 

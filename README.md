@@ -1,10 +1,10 @@
-# Canvas Overlay POC
+# canvas-highlight
 
 A React component that renders realistic highlighter and marker strokes above text in HTML documents using a canvas overlay. Supports two modes: **auto mode** (driven by `<mark>` elements) and **controlled mode** (driven by a `highlights` prop accepting Range objects or precomputed rects).
 
 ## Features
 
-- **Canvas Overlay**: Renders highlights on a canvas layer that scrolls naturally with page content
+- **Canvas-based**: Renders highlights on a canvas layer that scrolls naturally with page content
 - **Multi-line Support**: Uses the Range API to accurately highlight text that wraps across multiple lines
 - **Two Highlight Modes**:
   - **Auto mode**: Drop the component in and annotate content with `<mark>` — no JS needed at the call site
@@ -17,26 +17,29 @@ A React component that renders realistic highlighter and marker strokes above te
 - **Custom Colors**: Set hue per highlight via `data-hue` on `<mark>` elements (auto mode) or the `hue` field in each highlight descriptor (controlled mode)
 - **Responsive**: Automatically redraws on window resize; DOM mutation watching scoped to auto mode only
 
+## Installation
+
+```bash
+npm install canvas-highlight
+```
+
 ## Getting Started
 
-### Installation
+```jsx
+import { CanvasOverlay } from 'canvas-highlight';
+```
+
+### Running the demo
 
 ```bash
 npm install
+npm run dev      # http://localhost:5200
 ```
 
-### Development
+### Building the package
 
 ```bash
-npm run dev
-```
-
-Opens the app at `http://localhost:5200`
-
-### Build
-
-```bash
-npm run build
+npm run build:lib   # outputs dist/canvas-highlight.js, .cjs, and .d.ts files
 ```
 
 ## Usage
@@ -46,7 +49,7 @@ npm run build
 Drop `<CanvasOverlay>` near the root and annotate content with `<mark>`. No JS needed at the usage site.
 
 ```jsx
-import { CanvasOverlay } from './CanvasOverlay';
+import { CanvasOverlay } from 'canvas-highlight';
 
 function MyPage() {
   return (
@@ -146,10 +149,11 @@ For a full technical reference including renderer architecture and integration d
 
 ```
 src/
-├── main.jsx          # App entry point
-├── App.jsx           # Demo app: mode selector + controlled mode UI
-├── CanvasOverlay.jsx # Main overlay component
-└── renderers.js      # Rendering strategies (Rectangle, Marker, Pen, PenScribble)
+├── index.ts            # Library entry — re-exports component and renderers
+├── CanvasOverlay.tsx   # Main overlay component
+├── renderers.ts        # Rendering strategies (Rectangle, Marker, Pen, PenScribble)
+├── App.tsx             # Demo app: mode selector + controlled mode UI (not in bundle)
+└── main.tsx            # Demo entry point (not in bundle)
 test/
 ├── verify_renderers.cjs        # Auto mode regression: all four modes produce non-zero pixels
 └── verify_controlled_mode.cjs  # Controlled mode: parity, isolation, and round-trip tests

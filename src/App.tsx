@@ -36,7 +36,7 @@ export function App() {
       />
 
       <div className="container">
-        <h1>Canvas Overlay POC</h1>
+        <h1>canvas-highlight</h1>
 
         <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
           <strong>Rendering Mode:</strong>

@@ -2,13 +2,13 @@
   "name": "canvas-highlight",
   "version": "1.0.0",
   "type": "module",
-  "main": "./dist/canvas-overlay.cjs",
-  "module": "./dist/canvas-overlay.js",
+  "main": "./dist/canvas-highlight.cjs",
+  "module": "./dist/canvas-highlight.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/canvas-overlay.js",
-      "require": "./dist/canvas-overlay.cjs",
+      "import": "./dist/canvas-highlight.js",
+      "require": "./dist/canvas-highlight.cjs",
       "types": "./dist/index.d.ts"
     }
   },

@@ -12,7 +12,7 @@ export default defineConfig({
       entry: 'src/index.ts',
       name: 'CanvasOverlay',
       formats: ['es', 'cjs'],
-      fileName: (format) => `canvas-overlay.${format === 'es' ? 'js' : 'cjs'}`,
+      fileName: (format) => `canvas-highlight.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],

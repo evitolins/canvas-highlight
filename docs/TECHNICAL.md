@@ -2,9 +2,9 @@
 
 ## Overview
 
-`canvasOverlayPOC` renders decorative highlights over HTML `<mark>` elements using a full-document `<canvas>` overlay. The canvas sits absolutely positioned at `z-index: 1000` with `pointer-events: none`, so it is purely visual and does not interfere with page interaction.
+`canvas-highlight` renders decorative highlights over HTML `<mark>` elements using a full-document `<canvas>` overlay. The canvas sits absolutely positioned at `z-index: 1000` with `pointer-events: none`, so it is purely visual and does not interfere with page interaction.
 
-## Core Component: `CanvasOverlay` (`src/CanvasOverlay.jsx`)
+## Core Component: `CanvasOverlay` (`src/CanvasOverlay.tsx`)
 
 **Props:**
 
@@ -37,7 +37,7 @@ Exactly one of `range` or `rects` must be present per descriptor.
 
 Both modes redraw on `window resize`. The canvas is `position: absolute`, sized to `window.innerWidth × document.scrollHeight`, and scrolls naturally with the page.
 
-## Renderers (`src/renderers.js`)
+## Renderers (`src/renderers.ts`)
 
 All renderers share the signature `(ctx, rects, meta)` where `meta` is a plain object `{ hue?: number }`. Color is resolved from `meta.hue`; if absent, each renderer uses its default hue.
 
@@ -79,7 +79,7 @@ In auto mode, `CanvasOverlay` reads `data-hue` from each `<mark>` element and pa
 Drop `<CanvasOverlay>` anywhere near the root of the React tree. No state management required at the call site.
 
 ```jsx
-import { CanvasOverlay } from './CanvasOverlay';
+import { CanvasOverlay } from 'canvas-highlight';
 
 function MyPage() {
   return (
