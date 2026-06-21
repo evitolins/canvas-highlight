@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { CanvasOverlay } from './CanvasOverlay';
+import type { HighlightDescriptor, RenderMode } from './CanvasOverlay';
 
 export function App() {
-  const [renderMode, setRenderMode] = useState('rectangle');
+  const [renderMode, setRenderMode] = useState<RenderMode>('rectangle');
   const [controlledMode, setControlledMode] = useState(false);
-  const [controlledHighlights, setControlledHighlights] = useState([]);
+  const [controlledHighlights, setControlledHighlights] = useState<HighlightDescriptor[]>([]);
   const [nextHue, setNextHue] = useState(200);
 
   // Expose test API for Playwright e2e tests
   useEffect(() => {
-    window.__testAPI = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__testAPI = {
       setControlledMode,
       setHighlights: setControlledHighlights,
     };
-    return () => { delete window.__testAPI; };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return () => { delete (window as any).__testAPI; };
   }, [setControlledMode, setControlledHighlights]);
 
   const captureSelection = () => {
@@ -38,7 +41,7 @@ export function App() {
         <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
           <strong>Rendering Mode:</strong>
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            {['rectangle', 'marker', 'pen', 'penScribble'].map((mode) => (
+            {(['rectangle', 'marker', 'pen', 'penScribble'] as RenderMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setRenderMode(mode)}

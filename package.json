@@ -1,19 +1,53 @@
 {
-  "name": "canvasoverlaypoc",
+  "name": "canvas-overlay",
   "version": "1.0.0",
   "type": "module",
+  "main": "./dist/canvas-overlay.cjs",
+  "module": "./dist/canvas-overlay.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/canvas-overlay.js",
+      "require": "./dist/canvas-overlay.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs/TECHNICAL.md"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:lib": "vite build --config vite.lib.config.ts",
+    "preview": "vite preview",
+    "lint": "eslint src",
+    "format": "prettier --write src",
+    "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "lefthook": "^2.1.9",
     "playwright": "^1.60.0",
-    "vite": "^8.0.16"
+    "prettier": "^3.8.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1",
+    "vite": "^8.0.16",
+    "vite-plugin-dts": "^5.0.2"
   }
 }

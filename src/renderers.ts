@@ -2,33 +2,56 @@
  * Rendering strategies for canvas overlay highlights
  */
 
+export interface Rect {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface RendererMeta {
+  hue?: number;
+}
+
+export type Renderer = (ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta) => void;
+
+interface PenRendererConfig {
+  getBaseY: (y: number, height: number, passIndex: number, totalPasses: number) => number;
+  getAmplitude: number | ((height: number) => number);
+  frequency: number;
+  passCount: number;
+  strokeWidth: number;
+  baseOpacity: number;
+  defaultHue?: number;
+}
+
 /**
  * Get color from a numeric hue value or use default
- * @param {number|null|undefined} hue - Hue value (0-360)
- * @param {string} defaultColor - Default fill style (e.g., 'rgba(255, 255, 0, 0.4)')
- * @param {number} defaultHue - Default hue value (0-360) if hue isn't specified
- * @param {number} saturation - Saturation percentage (default 100)
- * @param {number} lightness - Lightness percentage (default 50)
- * @param {number} alpha - Alpha/opacity (default 0.4)
- * @returns {string} Color value in HSLA
+ * @param hue - Hue value (0-360)
+ * @param _defaultColor - Default fill style (unused, kept for call-site clarity)
+ * @param defaultHue - Default hue value (0-360) if hue isn't specified
+ * @param saturation - Saturation percentage (default 100)
+ * @param lightness - Lightness percentage (default 50)
+ * @param alpha - Alpha/opacity (default 0.4)
+ * @returns Color value in HSLA
  */
 function getMarkColor(
-  hue,
-  defaultColor,
+  hue: number | null | undefined,
+  _defaultColor: string,
   defaultHue = 60,
   saturation = 100,
   lightness = 50,
   alpha = 0.4,
-) {
-  const resolvedHue = (hue !== null && hue !== undefined) ? hue : defaultHue;
+): string {
+  const resolvedHue = hue !== null && hue !== undefined ? hue : defaultHue;
   return `hsla(${resolvedHue}, ${saturation}%, ${lightness}%, ${alpha})`;
 }
 
 /**
  * Simple rectangle renderer - draws basic filled rectangles
  */
-export function renderRectangle(ctx, rects, meta) {
-  const defaultColor = "rgba(255, 255, 0, 0.4)"; // Yellow fallback
+export function renderRectangle(ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta): void {
+  const defaultColor = 'rgba(255, 255, 0, 0.4)'; // Yellow fallback
   const fillColor = getMarkColor(meta?.hue, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
 
   rects.forEach((rect) => {
@@ -50,7 +73,7 @@ export function renderRectangle(ctx, rects, meta) {
  * - Slight angle variations for hand-drawn feel
  * - Multiple overlapping strokes for depth
  */
-export function renderMarker(ctx, rects, meta) {
+export function renderMarker(ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta): void {
   const baseOpacity = 0.25;
 
   // Get hue from meta or use default yellow (60)
@@ -75,32 +98,24 @@ export function renderMarker(ctx, rects, meta) {
       const angle = (Math.random() - 0.5) * 0.02;
 
       // Draw the main stroke with gradient for soft edges
-      drawMarkerStroke(
-        ctx,
-        x,
-        offsetY,
-        width,
-        markerHeight,
-        angle,
-        hue,
-        baseOpacity,
-      );
+      drawMarkerStroke(ctx, x, offsetY, width, markerHeight, angle, hue, baseOpacity);
     }
   });
 }
 
 /**
  * Helper: Draw a single marker stroke with soft edges and variations
- * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {number} x - X position
- * @param {number} y - Y position
- * @param {number} width - Width of the stroke
- * @param {number} height - Height of the stroke
- * @param {number} angle - Rotation angle in radians
- * @param {number} hue - Hue value (0-360)
- * @param {number} opacity - Opacity value (0-1)
  */
-function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
+function drawMarkerStroke(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  angle: number,
+  hue: number,
+  opacity: number,
+): void {
   ctx.save();
 
   // Create gradient BEFORE translate with coordinates relative to the shape
@@ -166,17 +181,9 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
     const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
 
     // Left edge cap (darker, more opaque) - reduced effect by 20%
-    const leftCapGradient = ctx.createLinearGradient(
-      -capWidth,
-      -height / 2,
-      capWidth,
-      -height / 2,
-    );
+    const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
     leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    leftCapGradient.addColorStop(
-      0.5,
-      `hsla(${hue}, 100%, 40%, ${opacity * 0.84})`,
-    );
+    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.84})`);
     leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = leftCapGradient;
@@ -190,10 +197,7 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
       -height / 2,
     );
     rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    rightCapGradient.addColorStop(
-      0.5,
-      `hsla(${hue}, 100%, 40%, ${opacity * 0.5})`,
-    );
+    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.5})`);
     rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
     ctx.fillStyle = rightCapGradient;
@@ -205,14 +209,6 @@ function drawMarkerStroke(ctx, x, y, width, height, angle, hue, opacity) {
 
 /**
  * Factory that produces a pen renderer from a style config.
- * @param {Object} config
- * @param {function} config.getBaseY   - (y, height, passIndex, totalPasses) => number
- * @param {number|function} config.getAmplitude - pixels, or (height) => pixels
- * @param {number} config.frequency    - angular frequency in radians/pixel
- * @param {number} config.passCount    - number of overlapping strokes per rect
- * @param {number} config.strokeWidth
- * @param {number} config.baseOpacity
- * @param {number} config.defaultHue
  */
 function createPenRenderer({
   getBaseY,
@@ -222,8 +218,8 @@ function createPenRenderer({
   strokeWidth,
   baseOpacity,
   defaultHue = 240,
-}) {
-  return function (ctx, rects, meta) {
+}: PenRendererConfig): Renderer {
+  return function (ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta): void {
     const hue = meta?.hue ?? defaultHue;
     const seed = Math.random() * 10;
 
@@ -235,13 +231,10 @@ function createPenRenderer({
 
       ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${baseOpacity})`;
       ctx.lineWidth = strokeWidth;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
-      const amplitude =
-        typeof getAmplitude === "function"
-          ? getAmplitude(height)
-          : getAmplitude;
+      const amplitude = typeof getAmplitude === 'function' ? getAmplitude(height) : getAmplitude;
 
       for (let p = 0; p < passCount; p++) {
         const passSeed = seed + p * 3.7;
@@ -251,10 +244,7 @@ function createPenRenderer({
         ctx.moveTo(x, baseY);
 
         for (let i = 0; i <= width; i += 2) {
-          ctx.lineTo(
-            x + i,
-            baseY + Math.sin(i * frequency + passSeed) * amplitude,
-          );
+          ctx.lineTo(x + i, baseY + Math.sin(i * frequency + passSeed) * amplitude);
         }
 
         ctx.stroke();
@@ -266,7 +256,7 @@ function createPenRenderer({
 /**
  * Pen renderer - wavy underline below the text
  */
-export const renderPen = createPenRenderer({
+export const renderPen: Renderer = createPenRenderer({
   getBaseY: (y, height) => y + height + 2,
   getAmplitude: 1.2,
   frequency: 0.05,
@@ -279,7 +269,7 @@ export const renderPen = createPenRenderer({
  * Pen scribble renderer - high-frequency waves drawn over the text,
  * spanning the full text height across multiple passes.
  */
-export const renderPenScribble = createPenRenderer({
+export const renderPenScribble: Renderer = createPenRenderer({
   // Distribute passes evenly across the text height so combined coverage exceeds it
   getBaseY: (y, height, p, total) =>
     y + height / 2 + (p / Math.max(total - 1, 1) - 0.5) * height * 0.5,

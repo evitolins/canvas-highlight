@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: false
+  commands:
+    typecheck:
+      run: npm run typecheck
+    lint:
+      run: npm run lint
+    format:
+      glob: 'src/**/*.{ts,tsx}'
+      run: npm run format
+      stage_fixed: true

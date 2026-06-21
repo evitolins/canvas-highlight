@@ -1,0 +1,73 @@
+# AGENTS.md — CanvasOverlay
+
+Guide for AI agents working in this repository.
+
+## Architecture Overview
+
+This repo has two distinct purposes sharing one `src/` directory:
+
+| Purpose | Entry point | How it runs |
+|---|---|---|
+| **Publishable library** | `src/index.ts` | `npm run build:lib` → `dist/` |
+| **Demo app** | `src/main.tsx` → `index.html` | `npm run dev` (Vite dev server) |
+
+The boundary is sharp: anything not exported from `src/index.ts` is not in the package. `App.tsx`, `main.tsx`, and `window.__testAPI` never appear in the published bundle.
+
+### Component modes
+
+**Auto mode** (default): `<CanvasOverlay renderMode="marker" />` — the component scans all `<mark>` elements in the DOM and redraws on mutations and resize.
+
+**Controlled mode**: `<CanvasOverlay highlights={descriptors} />` — the caller passes an array of `HighlightDescriptor` objects; DOM scanning is disabled.
+
+## Key Types
+
+All types live in `src/CanvasOverlay.tsx` and `src/renderers.ts` and are re-exported from `src/index.ts`.
+
+```ts
+// src/renderers.ts
+interface Rect { left: number; top: number; width: number; height: number }
+interface RendererMeta { hue?: number }
+type Renderer = (ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta) => void
+
+// src/CanvasOverlay.tsx
+type RenderMode = 'rectangle' | 'marker' | 'pen' | 'penScribble'
+interface HighlightDescriptor { range?: Range; rects?: Rect[]; hue?: number }
+interface CanvasOverlayProps { renderMode?: RenderMode; highlights?: HighlightDescriptor[] }
+```
+
+## Adding a New Renderer
+
+1. Implement the `Renderer` type in `src/renderers.ts` and export it.
+2. Add the key to the `RENDER_MODES` record in `src/CanvasOverlay.tsx` and extend the `RenderMode` union.
+3. Export the new renderer from `src/index.ts`.
+4. Add a demo button/label for the new mode in `src/App.tsx` (demo only — not required for the library).
+
+## Build Commands
+
+```bash
+npm run dev          # Start Vite dev server at http://localhost:5200 (demo app)
+npm run build        # Build demo app to dist/ (Vite default)
+npm run build:lib    # Build publishable library to dist/ (ES + CJS + .d.ts)
+npm run typecheck    # tsc --noEmit — zero errors required
+npm run lint         # ESLint on src/
+npm run format       # Prettier on src/
+```
+
+## Test Commands
+
+Playwright tests require the dev server to be running on port 5200:
+
+```bash
+npm run dev &                          # start server in background
+node test/verify_renderers.cjs         # smoke-test all four render modes
+node test/verify_controlled_mode.cjs   # test controlled mode highlight API
+```
+
+## What NOT to Include in the Library Entry
+
+`src/index.ts` must never import or re-export:
+- `App.tsx` or `main.tsx`
+- `window.__testAPI` (Playwright test hook, demo-only)
+- Any UI chrome, demo content, or dev-server configuration
+
+If it isn't exported from `src/index.ts`, it doesn't ship.

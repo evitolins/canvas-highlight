@@ -1,7 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { renderRectangle, renderMarker, renderPen, renderPenScribble } from './renderers';
+import type { Rect, Renderer } from './renderers';
 
-const RENDER_MODES = {
+export type { Rect } from './renderers';
+export type { RendererMeta, Renderer } from './renderers';
+
+export type RenderMode = 'rectangle' | 'marker' | 'pen' | 'penScribble';
+
+export interface HighlightDescriptor {
+  range?: Range;
+  rects?: Rect[];
+  hue?: number;
+}
+
+export interface CanvasOverlayProps {
+  renderMode?: RenderMode;
+  highlights?: HighlightDescriptor[];
+}
+
+const RENDER_MODES: Record<RenderMode, Renderer> = {
   rectangle: renderRectangle,
   marker: renderMarker,
   pen: renderPen,
@@ -10,13 +27,12 @@ const RENDER_MODES = {
 
 /**
  * Canvas overlay component that renders highlights above marked text
- * @param {Object} props
- * @param {string} props.renderMode - The rendering style: 'rectangle', 'marker', or 'pen'
- * @param {Array} [props.highlights] - Controlled mode: array of { range?, rects?, hue? } descriptors.
+ * @param renderMode - The rendering style: 'rectangle', 'marker', 'pen', or 'penScribble'
+ * @param highlights - Controlled mode: array of { range?, rects?, hue? } descriptors.
  *   When provided, only these highlights are drawn and <mark> scanning is disabled.
  */
-export function CanvasOverlay({ renderMode = 'rectangle', highlights }) {
-  const canvasRef = useRef(null);
+export function CanvasOverlay({ renderMode = 'rectangle', highlights }: CanvasOverlayProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderer = RENDER_MODES[renderMode] || renderRectangle;
 
   useEffect(() => {
@@ -37,7 +53,7 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights }) {
       if (highlights !== undefined) {
         // Controlled mode: iterate highlights array
         highlights.forEach(({ range, rects: precomputedRects, hue }) => {
-          let resolvedRects;
+          let resolvedRects: Rect[];
           if (range) {
             resolvedRects = Array.from(range.getClientRects());
           } else if (precomputedRects) {
@@ -68,7 +84,7 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights }) {
     window.addEventListener('resize', handleResize);
 
     // MutationObserver only needed in auto mode
-    let observer;
+    let observer: MutationObserver | undefined;
     if (highlights === undefined) {
       observer = new MutationObserver(() => updateCanvas());
       observer.observe(document.body, {
