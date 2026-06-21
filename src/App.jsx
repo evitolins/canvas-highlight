@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CanvasOverlay } from './CanvasOverlay';
 
 export function App() {
@@ -6,6 +6,15 @@ export function App() {
   const [controlledMode, setControlledMode] = useState(false);
   const [controlledHighlights, setControlledHighlights] = useState([]);
   const [nextHue, setNextHue] = useState(200);
+
+  // Expose test API for Playwright e2e tests
+  useEffect(() => {
+    window.__testAPI = {
+      setControlledMode,
+      setHighlights: setControlledHighlights,
+    };
+    return () => { delete window.__testAPI; };
+  }, [setControlledMode, setControlledHighlights]);
 
   const captureSelection = () => {
     const sel = window.getSelection();
