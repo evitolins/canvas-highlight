@@ -11,17 +11,35 @@
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `renderMode` | `string` | `'rectangle'` | Selects the highlight rendering style |
+| `highlights` | `Array \| undefined` | `undefined` | Controlled mode: array of `{ range?, rects?, hue? }` descriptors. When provided, `<mark>` scanning and `MutationObserver` are disabled. |
+
+**Highlight descriptor shape (`highlights` prop):**
+
+| Field | Type | Description |
+|---|---|---|
+| `range` | `Range` | Live DOM Range — rects re-queried on every draw, so highlights update correctly on resize |
+| `rects` | `Array<{left,top,width,height}>` | Precomputed rects — fast, but caller must recompute on layout changes |
+| `hue` | `number` | HSL hue (0–360). Falls back to each renderer's default if omitted |
+
+Exactly one of `range` or `rects` must be present per descriptor.
 
 **Behavior:**
-- Mounts a `<canvas>` sized to `window.innerWidth × document.scrollHeight` (covers the full document)
-- Queries all `<mark>` elements in the DOM
-- Uses the **Range API** (`range.getClientRects()`) to get per-line bounding rects, correctly handling text that wraps across multiple lines
-- Converts viewport-relative rects to document-relative coordinates via `window.scrollX/Y`
-- Redraws on `window resize` and any DOM mutation (via `MutationObserver` on `document.body`)
+
+*Auto mode* (`highlights === undefined`):
+- Queries all `<mark>` elements, uses the Range API to get per-line bounding rects
+- Reads `data-hue` attribute from each `<mark>` for color
+- `MutationObserver` on `document.body` triggers redraws on DOM changes
+
+*Controlled mode* (`highlights` is an array):
+- Iterates the `highlights` array; resolves Range → rects on each draw if `range` is supplied
+- `<mark>` elements in the DOM are ignored
+- No `MutationObserver` — redraws are driven by React re-renders when `highlights` changes
+
+Both modes redraw on `window resize`. The canvas is `position: absolute`, sized to `window.innerWidth × document.scrollHeight`, and scrolls naturally with the page.
 
 ## Renderers (`src/renderers.js`)
 
-All renderers share the signature `(ctx, rects, markElement)` and read an optional `data-hue` attribute (HSL hue, 0–360) from the `<mark>` element for color customization.
+All renderers share the signature `(ctx, rects, meta)` where `meta` is a plain object `{ hue?: number }`. Color is resolved from `meta.hue`; if absent, each renderer uses its default hue.
 
 | Mode | Default Hue | Description |
 |---|---|---|
@@ -50,18 +68,15 @@ createPenRenderer({
 
 ### Color Resolution
 
-All renderers resolve color via the `data-hue` attribute on the `<mark>` element:
+All renderers call the internal `getMarkColor(hue, defaultColor, defaultHue, saturation, lightness, alpha)` helper, which resolves to `hsla(resolvedHue, sat%, light%, alpha)`. `hue` comes from `meta?.hue`; if `null`/`undefined`, `defaultHue` is used.
 
-```html
-<mark data-hue="120">Green highlight</mark>
-<mark data-hue="0">Red highlight</mark>
-```
-
-If `data-hue` is absent, each renderer falls back to its default hue. Colors are expressed as `hsla(hue, 100%, 50%, alpha)`.
+In auto mode, `CanvasOverlay` reads `data-hue` from each `<mark>` element and passes the parsed float as `meta.hue`. In controlled mode, the caller sets `hue` directly on each highlight descriptor.
 
 ## Integration
 
-Drop `<CanvasOverlay>` anywhere near the root of the React tree:
+### Auto mode
+
+Drop `<CanvasOverlay>` anywhere near the root of the React tree. No state management required at the call site.
 
 ```jsx
 import { CanvasOverlay } from './CanvasOverlay';
@@ -70,12 +85,49 @@ function MyPage() {
   return (
     <>
       <CanvasOverlay renderMode="marker" />
-      <div>
-        <p>Your content with <mark>marked</mark> text here.</p>
-      </div>
+      <p>Your content with <mark data-hue="120">marked</mark> text here.</p>
     </>
   );
 }
 ```
 
-Highlights are driven purely by `<mark>` elements in the DOM — no React state or props are needed on the marked content itself. No external dependencies beyond React.
+### Controlled mode
+
+Manage highlight state in the parent and pass it as the `highlights` prop. When `highlights` is defined (including an empty array), `<mark>` scanning is fully bypassed.
+
+```jsx
+const [highlights, setHighlights] = useState([]);
+
+// Capture a user's text selection
+const capture = () => {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  setHighlights((prev) => [...prev, { range: sel.getRangeAt(0).cloneRange(), hue: 200 }]);
+};
+
+return (
+  <>
+    <CanvasOverlay renderMode="marker" highlights={highlights} />
+    <button onClick={capture}>Capture selection</button>
+    <button onClick={() => setHighlights([])}>Clear</button>
+  </>
+);
+```
+
+No external dependencies beyond React.
+
+## Testing
+
+| Script | What it verifies |
+|---|---|
+| `node test/verify_renderers.cjs` | Auto mode regression — all four render modes produce non-zero canvas pixels |
+| `node test/verify_controlled_mode.cjs` | Controlled mode — pixel parity with auto mode, empty-array isolation, auto mode restoration |
+
+Both scripts require the dev server running on port 5200 (`npm run dev`). Screenshots are saved to `/tmp/`.
+
+`verify_controlled_mode.cjs` works by:
+1. Capturing the canvas pixel count in auto mode (rectangle renderer)
+2. Extracting precomputed rects from `<mark>` elements via the Range API
+3. Switching to controlled mode via `window.__testAPI` and injecting those rects as highlights
+4. Asserting the pixel count is identical (rectangle renderer uses `fillRect` with the same coordinates)
+5. Asserting `highlights=[]` renders nothing even with `<mark>` elements present in the DOM
