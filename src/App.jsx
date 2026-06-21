@@ -3,10 +3,25 @@ import { CanvasOverlay } from './CanvasOverlay';
 
 export function App() {
   const [renderMode, setRenderMode] = useState('rectangle');
+  const [controlledMode, setControlledMode] = useState(false);
+  const [controlledHighlights, setControlledHighlights] = useState([]);
+  const [nextHue, setNextHue] = useState(200);
+
+  const captureSelection = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0).cloneRange();
+    setControlledHighlights((prev) => [...prev, { range, hue: nextHue }]);
+    setNextHue((h) => (h + 60) % 360);
+    sel.removeAllRanges();
+  };
 
   return (
     <>
-      <CanvasOverlay renderMode={renderMode} />
+      <CanvasOverlay
+        renderMode={renderMode}
+        highlights={controlledMode ? controlledHighlights : undefined}
+      />
 
       <div className="container">
         <h1>Canvas Overlay POC</h1>
@@ -38,6 +53,57 @@ export function App() {
             {renderMode === 'pen' && 'Pen/underline style with wavy strokes'}
             {renderMode === 'penScribble' && 'Pen scribble — high-frequency waves drawn over the text'}
           </p>
+        </div>
+
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#e8f4e8', borderRadius: '8px', border: '1px solid #b0d8b0' }}>
+          <strong>Controlled Mode:</strong>
+          <p style={{ fontSize: '14px', color: '#444', marginTop: '8px' }}>
+            Toggle controlled mode to drive highlights from React state instead of{' '}
+            <code>&lt;mark&gt;</code> elements. Select text below then click "Capture Selection".
+          </p>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+            <button
+              onClick={() => setControlledMode((m) => !m)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: controlledMode ? '#28a745' : '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              {controlledMode ? 'Controlled mode ON' : 'Controlled mode OFF'}
+            </button>
+            <button
+              onClick={captureSelection}
+              disabled={!controlledMode}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: controlledMode ? '#007bff' : '#ccc',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: controlledMode ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Capture Selection
+            </button>
+            <button
+              onClick={() => setControlledHighlights([])}
+              disabled={!controlledMode}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: controlledMode ? '#dc3545' : '#ccc',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: controlledMode ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Clear ({controlledHighlights.length})
+            </button>
+          </div>
         </div>
 
         <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>

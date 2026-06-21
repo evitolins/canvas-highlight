@@ -3,37 +3,33 @@
  */
 
 /**
- * Get color from mark element's data-hue attribute or use default color
- * @param {HTMLElement} mark - The mark element
+ * Get color from a numeric hue value or use default
+ * @param {number|null|undefined} hue - Hue value (0-360)
  * @param {string} defaultColor - Default fill style (e.g., 'rgba(255, 255, 0, 0.4)')
- * @param {number} defaultHue - Default hue value (0-360) if data-hue isn't specified
+ * @param {number} defaultHue - Default hue value (0-360) if hue isn't specified
  * @param {number} saturation - Saturation percentage (default 100)
  * @param {number} lightness - Lightness percentage (default 50)
  * @param {number} alpha - Alpha/opacity (default 0.4)
- * @returns {string} Color value in HSL or the default color
+ * @returns {string} Color value in HSLA
  */
 function getMarkColor(
-  mark,
+  hue,
   defaultColor,
   defaultHue = 60,
   saturation = 100,
   lightness = 50,
   alpha = 0.4,
 ) {
-  const hueAttr = mark?.getAttribute("data-hue");
-  const hue =
-    hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
-      ? parseFloat(hueAttr)
-      : defaultHue;
-  return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+  const resolvedHue = (hue !== null && hue !== undefined) ? hue : defaultHue;
+  return `hsla(${resolvedHue}, ${saturation}%, ${lightness}%, ${alpha})`;
 }
 
 /**
  * Simple rectangle renderer - draws basic filled rectangles
  */
-export function renderRectangle(ctx, rects, mark) {
+export function renderRectangle(ctx, rects, meta) {
   const defaultColor = "rgba(255, 255, 0, 0.4)"; // Yellow fallback
-  const fillColor = getMarkColor(mark, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
+  const fillColor = getMarkColor(meta?.hue, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -54,15 +50,11 @@ export function renderRectangle(ctx, rects, mark) {
  * - Slight angle variations for hand-drawn feel
  * - Multiple overlapping strokes for depth
  */
-export function renderMarker(ctx, rects, mark) {
+export function renderMarker(ctx, rects, meta) {
   const baseOpacity = 0.25;
 
-  // Get hue from mark or use default yellow (60)
-  const hueAttr = mark?.getAttribute("data-hue");
-  const hue =
-    hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
-      ? parseFloat(hueAttr)
-      : 60;
+  // Get hue from meta or use default yellow (60)
+  const hue = meta?.hue ?? 60;
 
   rects.forEach((rect) => {
     // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
@@ -231,12 +223,8 @@ function createPenRenderer({
   baseOpacity,
   defaultHue = 240,
 }) {
-  return function (ctx, rects, mark) {
-    const hueAttr = mark?.getAttribute("data-hue");
-    const hue =
-      hueAttr !== null && hueAttr !== undefined && hueAttr !== ""
-        ? parseFloat(hueAttr)
-        : defaultHue;
+  return function (ctx, rects, meta) {
+    const hue = meta?.hue ?? defaultHue;
     const seed = Math.random() * 10;
 
     rects.forEach((rect) => {

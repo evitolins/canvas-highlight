@@ -12,8 +12,10 @@ const RENDER_MODES = {
  * Canvas overlay component that renders highlights above marked text
  * @param {Object} props
  * @param {string} props.renderMode - The rendering style: 'rectangle', 'marker', or 'pen'
+ * @param {Array} [props.highlights] - Controlled mode: array of { range?, rects?, hue? } descriptors.
+ *   When provided, only these highlights are drawn and <mark> scanning is disabled.
  */
-export function CanvasOverlay({ renderMode = 'rectangle' }) {
+export function CanvasOverlay({ renderMode = 'rectangle', highlights }) {
   const canvasRef = useRef(null);
   const renderer = RENDER_MODES[renderMode] || renderRectangle;
 
@@ -32,22 +34,30 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Find all <mark> elements
-      const marks = document.querySelectorAll('mark');
-
-      // Render each mark using the selected renderer
-      marks.forEach((mark) => {
-        // Use Range API to get individual line rectangles for wrapped text
-        const range = document.createRange();
-        range.selectNodeContents(mark);
-        const rects = Array.from(range.getClientRects());
-
-        // Pass the mark element and rects to the renderer
-        // (mark element contains data-hue attribute if custom color is desired)
-        if (rects.length > 0) {
-          renderer(ctx, rects, mark);
-        }
-      });
+      if (highlights !== undefined) {
+        // Controlled mode: iterate highlights array
+        highlights.forEach(({ range, rects: precomputedRects, hue }) => {
+          let resolvedRects;
+          if (range) {
+            resolvedRects = Array.from(range.getClientRects());
+          } else if (precomputedRects) {
+            resolvedRects = precomputedRects;
+          } else return;
+          if (resolvedRects.length > 0) renderer(ctx, resolvedRects, { hue });
+        });
+      } else {
+        // Auto mode: scan <mark> elements
+        document.querySelectorAll('mark').forEach((mark) => {
+          const range = document.createRange();
+          range.selectNodeContents(mark);
+          const rects = Array.from(range.getClientRects());
+          if (rects.length > 0) {
+            const hueAttr = mark.getAttribute('data-hue');
+            const hue = hueAttr ? parseFloat(hueAttr) : undefined;
+            renderer(ctx, rects, { hue });
+          }
+        });
+      }
     };
 
     // Initial draw
@@ -57,19 +67,22 @@ export function CanvasOverlay({ renderMode = 'rectangle' }) {
     const handleResize = () => updateCanvas();
     window.addEventListener('resize', handleResize);
 
-    // Use MutationObserver to redraw when DOM changes
-    const observer = new MutationObserver(() => updateCanvas());
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
+    // MutationObserver only needed in auto mode
+    let observer;
+    if (highlights === undefined) {
+      observer = new MutationObserver(() => updateCanvas());
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      observer.disconnect();
+      observer?.disconnect();
     };
-  }, [renderer]);
+  }, [renderer, highlights]);
 
   return (
     <canvas
