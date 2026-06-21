@@ -1,5 +1,5 @@
 {
-  "name": "canvas-overlay",
+  "name": "canvas-highlight",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/canvas-overlay.cjs",
