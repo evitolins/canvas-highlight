@@ -112,6 +112,10 @@ Calligraphy-style underlines with:
 4. **Rendering**: Selected renderer draws on the canvas using viewport-relative coordinates
 5. **Synchronization**: Canvas scrolls naturally with the page content; updates on resize and DOM mutations
 
+## Documentation
+
+For a full technical reference including renderer architecture and integration details, see [docs/TECHNICAL.md](docs/TECHNICAL.md).
+
 ## Project Structure
 
 ```
