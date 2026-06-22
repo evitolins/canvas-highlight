@@ -33,6 +33,11 @@ export function App() {
       <CanvasOverlay
         renderMode={renderMode}
         highlights={controlledMode ? controlledHighlights : undefined}
+        onRenderComplete={() => {
+          // Expose a render counter for test automation
+          const w = window as unknown as Record<string, number>;
+          w.__renderCount = (w.__renderCount ?? 0) + 1;
+        }}
       />
 
       <div className="container">

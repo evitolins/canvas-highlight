@@ -9,3 +9,8 @@ pre-commit:
       glob: 'src/**/*.{ts,tsx}'
       run: npm run format
       stage_fixed: true
+
+pre-push:
+  commands:
+    test:
+      run: npm run test:e2e

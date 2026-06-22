@@ -16,6 +16,8 @@ export interface HighlightDescriptor {
 export interface CanvasOverlayProps {
   renderMode?: RenderMode;
   highlights?: HighlightDescriptor[];
+  /** Called after every completed draw cycle (initial render, resize, highlights change). */
+  onRenderComplete?: () => void;
 }
 
 const RENDER_MODES: Record<RenderMode, Renderer> = {
@@ -31,9 +33,13 @@ const RENDER_MODES: Record<RenderMode, Renderer> = {
  * @param highlights - Controlled mode: array of { range?, rects?, hue? } descriptors.
  *   When provided, only these highlights are drawn and <mark> scanning is disabled.
  */
-export function CanvasOverlay({ renderMode = 'rectangle', highlights }: CanvasOverlayProps) {
+export function CanvasOverlay({ renderMode = 'rectangle', highlights, onRenderComplete }: CanvasOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderer = RENDER_MODES[renderMode] || renderRectangle;
+  // Keep a ref so the effect never needs onRenderComplete in its dep array,
+  // avoiding re-runs (and potential loops) when the caller passes an inline function.
+  const onRenderCompleteRef = useRef(onRenderComplete);
+  onRenderCompleteRef.current = onRenderComplete;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,17 +82,22 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights }: CanvasOv
       }
     };
 
+    const updateCanvasAndNotify = () => {
+      updateCanvas();
+      onRenderCompleteRef.current?.();
+    };
+
     // Initial draw
-    updateCanvas();
+    updateCanvasAndNotify();
 
     // Redraw on window resize (which may change content layout)
-    const handleResize = () => updateCanvas();
+    const handleResize = () => updateCanvasAndNotify();
     window.addEventListener('resize', handleResize);
 
     // MutationObserver only needed in auto mode
     let observer: MutationObserver | undefined;
     if (highlights === undefined) {
-      observer = new MutationObserver(() => updateCanvas());
+      observer = new MutationObserver(() => updateCanvasAndNotify());
       observer.observe(document.body, {
         childList: true,
         subtree: true,
