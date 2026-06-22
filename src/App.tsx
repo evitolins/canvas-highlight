@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CanvasOverlay } from './CanvasOverlay';
 import type { HighlightDescriptor, RenderMode } from './CanvasOverlay';
 
@@ -7,6 +7,8 @@ export function App() {
   const [controlledMode, setControlledMode] = useState(false);
   const [controlledHighlights, setControlledHighlights] = useState<HighlightDescriptor[]>([]);
   const [nextHue, setNextHue] = useState(200);
+  const [containerMode, setContainerMode] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Expose test API for Playwright e2e tests
   useEffect(() => {
@@ -14,10 +16,18 @@ export function App() {
     (window as any).__testAPI = {
       setControlledMode,
       setHighlights: setControlledHighlights,
+      setContainerMode,
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return () => { delete (window as any).__testAPI; };
-  }, [setControlledMode, setControlledHighlights]);
+  }, [setControlledMode, setControlledHighlights, setContainerMode]);
+
+  const onRenderComplete = () => {
+    const w = window as unknown as Record<string, number>;
+    w.__renderCount = (w.__renderCount ?? 0) + 1;
+  };
+
+  const highlights = controlledMode ? controlledHighlights : undefined;
 
   const captureSelection = () => {
     const sel = window.getSelection();
@@ -30,15 +40,13 @@ export function App() {
 
   return (
     <>
-      <CanvasOverlay
-        renderMode={renderMode}
-        highlights={controlledMode ? controlledHighlights : undefined}
-        onRenderComplete={() => {
-          // Expose a render counter for test automation
-          const w = window as unknown as Record<string, number>;
-          w.__renderCount = (w.__renderCount ?? 0) + 1;
-        }}
-      />
+      {!containerMode && (
+        <CanvasOverlay
+          renderMode={renderMode}
+          highlights={highlights}
+          onRenderComplete={onRenderComplete}
+        />
+      )}
 
       <div className="container">
         <h1>canvas-highlight</h1>
@@ -135,59 +143,75 @@ export function App() {
           </p>
         </div>
 
-        <p>
-          This is a demo of a <mark>canvas overlay</mark> that renders highlighter
-          strokes above marked text.
-        </p>
+        {/* Text content wrapped in a ref'd div so it can be used as a scoped canvas container */}
+        <div
+          ref={containerRef}
+          data-testid="content-container"
+          style={containerMode ? { position: 'relative' } : undefined}
+        >
+          {containerMode && (
+            <CanvasOverlay
+              renderMode={renderMode}
+              highlights={highlights}
+              container={containerRef}
+              onRenderComplete={onRenderComplete}
+            />
+          )}
 
-        <p>
-          The component scans for <mark data-hue="120">mark elements</mark> in the DOM and draws
-          over them on a canvas layer that sits <mark data-hue="240">above the document</mark>.
-        </p>
+          <p>
+            This is a demo of a <mark>canvas overlay</mark> that renders highlighter
+            strokes above marked text.
+          </p>
 
-        <p>
-          Try scrolling down to see the overlay <mark data-hue="300">follow your scroll</mark> position.
-        </p>
+          <p>
+            The component scans for <mark data-hue="120">mark elements</mark> in the DOM and draws
+            over them on a canvas layer that sits <mark data-hue="240">above the document</mark>.
+          </p>
 
-        <p>
-          <strong>Multi-line test:</strong> The component handles text that <mark data-hue="30">wraps across multiple
-          lines by using the Range API to get individual rectangles for each line</mark> of text.
-          This gives accurate highlighting for longer marked sections regardless of the rendering mode.
-        </p>
+          <p>
+            Try scrolling down to see the overlay <mark data-hue="300">follow your scroll</mark> position.
+          </p>
 
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do <mark>eiusmod tempor</mark>{' '}
-          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-          exercitation ullamco laboris.
-        </p>
+          <p>
+            <strong>Multi-line test:</strong> The component handles text that <mark data-hue="30">wraps across multiple
+            lines by using the Range API to get individual rectangles for each line</mark> of text.
+            This gives accurate highlighting for longer marked sections regardless of the rendering mode.
+          </p>
 
-        <p>
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-          nulla pariatur. Excepteur sint occaecat <mark>cupidatat non proident</mark>, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.
-        </p>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do <mark>eiusmod tempor</mark>{' '}
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris.
+          </p>
 
-        <p>
-          Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-          laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi{' '}
-          <mark>architecto beatae vitae</mark> dicta sunt explicabo.
-        </p>
+          <p>
+            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+            nulla pariatur. Excepteur sint occaecat <mark>cupidatat non proident</mark>, sunt in
+            culpa qui officia deserunt mollit anim id est laborum.
+          </p>
 
-        <p>
-          Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-          consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-        </p>
+          <p>
+            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
+            laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi{' '}
+            <mark>architecto beatae vitae</mark> dicta sunt explicabo.
+          </p>
 
-        <p>
-          Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci
-          velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam
-          aliquam quaerat voluptatem.
-        </p>
+          <p>
+            Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
+            consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+          </p>
 
-        <p>
-          Ut enim ad minima veniam, quis <mark>nostrum exercitationem</mark> ullam corporis
-          suscipit laboriosam, nisi ut quid ex ea commodi consequatur.
-        </p>
+          <p>
+            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci
+            velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam
+            aliquam quaerat voluptatem.
+          </p>
+
+          <p>
+            Ut enim ad minima veniam, quis <mark>nostrum exercitationem</mark> ullam corporis
+            suscipit laboriosam, nisi ut quid ex ea commodi consequatur.
+          </p>
+        </div>
       </div>
     </>
   );

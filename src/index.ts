@@ -1,4 +1,4 @@
 export { CanvasOverlay } from './CanvasOverlay';
-export { renderRectangle, renderMarker, renderPen, renderPenScribble } from './renderers';
+export { renderRectangle, renderMarker, renderPen, renderPenScribble, renderActiveOutline } from './renderers';
 export type { CanvasOverlayProps, HighlightDescriptor, RenderMode } from './CanvasOverlay';
 export type { Rect, RendererMeta, Renderer } from './renderers';

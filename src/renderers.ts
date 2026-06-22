@@ -55,14 +55,8 @@ export function renderRectangle(ctx: CanvasRenderingContext2D, rects: Rect[], me
   const fillColor = getMarkColor(meta?.hue, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
 
   rects.forEach((rect) => {
-    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
-    const x = rect.left + window.scrollX;
-    const y = rect.top + window.scrollY;
-    const width = rect.width;
-    const height = rect.height;
-
     ctx.fillStyle = fillColor;
-    ctx.fillRect(x, y, width, height);
+    ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
   });
 }
 
@@ -80,9 +74,8 @@ export function renderMarker(ctx: CanvasRenderingContext2D, rects: Rect[], meta?
   const hue = meta?.hue ?? 60;
 
   rects.forEach((rect) => {
-    // Canvas is position: absolute, so convert viewport-relative to document-relative coordinates
-    const x = rect.left + window.scrollX;
-    const y = rect.top + window.scrollY;
+    const x = rect.left;
+    const y = rect.top;
     const width = rect.width;
     const height = rect.height;
 
@@ -224,8 +217,8 @@ function createPenRenderer({
     const seed = Math.random() * 10;
 
     rects.forEach((rect) => {
-      const x = rect.left + window.scrollX;
-      const y = rect.top + window.scrollY;
+      const x = rect.left;
+      const y = rect.top;
       const width = rect.width;
       const height = rect.height;
 
@@ -280,3 +273,17 @@ export const renderPenScribble: Renderer = createPenRenderer({
   strokeWidth: 1.5,
   baseOpacity: 0.45,
 });
+
+/**
+ * Draws a dashed outline around each rect — used for the active/selected highlight state.
+ */
+export function renderActiveOutline(ctx: CanvasRenderingContext2D, rects: Rect[]): void {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0, 127, 212, 0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  rects.forEach(rect => {
+    ctx.strokeRect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2);
+  });
+  ctx.restore();
+}
