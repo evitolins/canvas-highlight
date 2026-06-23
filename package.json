@@ -16,6 +16,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "docs/TECHNICAL.md"
   ],
   "scripts": {
@@ -26,7 +27,10 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.test.json",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "release:patch": "npm version patch -m 'Release v%s' && git push origin main --follow-tags",
+    "release:minor": "npm version minor -m 'Release v%s' && git push origin main --follow-tags",
+    "release:major": "npm version major -m 'Release v%s' && git push origin main --follow-tags"
   },
   "keywords": ["canvas", "highlight", "react", "marker", "annotation", "text-highlight", "highlighter", "mark"],
   "author": "Eriks Vitolins <evitolins@gmail.com>",
