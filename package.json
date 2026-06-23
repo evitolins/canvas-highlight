@@ -1,6 +1,6 @@
 {
   "name": "canvas-highlight",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React component for canvas-based text highlighting with marker, pen, and rectangle renderers",
   "type": "module",
   "main": "./dist/canvas-highlight.cjs",
@@ -32,7 +32,16 @@
     "release:minor": "npm version minor -m 'Release v%s' && git push origin main --follow-tags",
     "release:major": "npm version major -m 'Release v%s' && git push origin main --follow-tags"
   },
-  "keywords": ["canvas", "highlight", "react", "marker", "annotation", "text-highlight", "highlighter", "mark"],
+  "keywords": [
+    "canvas",
+    "highlight",
+    "react",
+    "marker",
+    "annotation",
+    "text-highlight",
+    "highlighter",
+    "mark"
+  ],
   "author": "Eriks Vitolins <evitolins@gmail.com>",
   "license": "MIT",
   "repository": {
