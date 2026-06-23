@@ -15,6 +15,19 @@ export interface RendererMeta {
 
 export type Renderer = (ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta) => void;
 
+export function shiftRects(
+  rects: ArrayLike<DOMRect> | Rect[],
+  offsetX: number,
+  offsetY: number,
+): Rect[] {
+  return Array.from(rects as Rect[]).map((r) => ({
+    left: r.left + offsetX,
+    top: r.top + offsetY,
+    width: r.width,
+    height: r.height,
+  }));
+}
+
 interface PenRendererConfig {
   getBaseY: (y: number, height: number, passIndex: number, totalPasses: number) => number;
   getAmplitude: number | ((height: number) => number);
@@ -287,7 +300,7 @@ export function renderActiveOutline(ctx: CanvasRenderingContext2D, rects: Rect[]
   ctx.strokeStyle = 'rgba(0, 127, 212, 0.9)';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 3]);
-  rects.forEach(rect => {
+  rects.forEach((rect) => {
     ctx.strokeRect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2);
   });
   ctx.restore();

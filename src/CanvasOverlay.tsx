@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { renderRectangle, renderMarker, renderPen, renderPenScribble, renderActiveOutline } from './renderers';
+import { renderRectangle, renderMarker, renderPen, renderPenScribble, renderActiveOutline, shiftRects } from './renderers';
 import type { Rect, Renderer } from './renderers';
 
 export type { Rect } from './renderers';
@@ -21,6 +21,24 @@ export interface CanvasOverlayProps {
   container?: RefObject<Element | null>;
   /** Called after every completed draw cycle (initial render, resize, highlights change). */
   onRenderComplete?: () => void;
+}
+
+function getCanvasBounds(containerEl: Element | null | undefined) {
+  if (containerEl) {
+    const cr = containerEl.getBoundingClientRect();
+    return {
+      width: containerEl.scrollWidth,
+      height: containerEl.scrollHeight,
+      offsetX: -cr.left + containerEl.scrollLeft,
+      offsetY: -cr.top + containerEl.scrollTop,
+    };
+  }
+  return {
+    width: window.innerWidth,
+    height: document.documentElement.scrollHeight,
+    offsetX: window.scrollX,
+    offsetY: window.scrollY,
+  };
 }
 
 const RENDER_MODES: Record<RenderMode, Renderer> = {
@@ -45,68 +63,27 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights, container,
     if (!ctx) return;
 
     const updateCanvas = () => {
-      const containerEl = container?.current;
+      const { width, height, offsetX, offsetY } = getCanvasBounds(container?.current);
 
-      let canvasWidth: number;
-      let canvasHeight: number;
-      let offsetX: number;
-      let offsetY: number;
-
-      if (containerEl) {
-        canvasWidth = containerEl.scrollWidth;
-        canvasHeight = containerEl.scrollHeight;
-        const cr = containerEl.getBoundingClientRect();
-        offsetX = -cr.left + containerEl.scrollLeft;
-        offsetY = -cr.top + containerEl.scrollTop;
-      } else {
-        canvasWidth = window.innerWidth;
-        canvasHeight = document.documentElement.scrollHeight;
-        offsetX = window.scrollX;
-        offsetY = window.scrollY;
-      }
-
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      const shiftRects = (viewportRects: ArrayLike<DOMRect> | Rect[]): Rect[] =>
-        Array.from(viewportRects as Rect[]).map(r => ({
-          left: r.left + offsetX,
-          top: r.top + offsetY,
-          width: r.width,
-          height: r.height,
-        }));
-
-      const drawHighlight = ({ range, rects: precomputedRects, hue }: HighlightDescriptor) => {
-        let raw: ArrayLike<DOMRect> | Rect[];
-        if (range) raw = range.getClientRects();
-        else if (precomputedRects) raw = precomputedRects;
-        else return;
-        const shifted = shiftRects(raw);
-        if (shifted.length === 0) return;
-        renderer(ctx, shifted, { hue });
-      };
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
 
       if (highlights !== undefined) {
-        // First pass: fill highlights
-        highlights.forEach(drawHighlight);
-        // Second pass: active outlines on top
-        highlights.forEach(({ range, rects: precomputedRects, active }) => {
-          if (!active) return;
-          let raw: ArrayLike<DOMRect> | Rect[];
-          if (range) raw = range.getClientRects();
-          else if (precomputedRects) raw = precomputedRects;
-          else return;
-          const shifted = shiftRects(raw);
-          if (shifted.length === 0) return;
-          renderActiveOutline(ctx, shifted);
+        const computed = highlights.flatMap(({ range, rects: precomputedRects, hue, active }) => {
+          const raw = range ? range.getClientRects() : precomputedRects;
+          if (!raw) return [];
+          const shifted = shiftRects(raw, offsetX, offsetY);
+          return shifted.length ? [{ shifted, hue, active }] : [];
         });
+        computed.forEach(({ shifted, hue }) => renderer(ctx, shifted, { hue }));
+        computed.filter(h => h.active).forEach(({ shifted }) => renderActiveOutline(ctx, shifted));
       } else {
         // Auto mode: scan <mark> elements
         document.querySelectorAll('mark').forEach((mark) => {
           const range = document.createRange();
           range.selectNodeContents(mark);
-          const shifted = shiftRects(range.getClientRects());
+          const shifted = shiftRects(range.getClientRects(), offsetX, offsetY);
           if (shifted.length > 0) {
             const hueAttr = mark.getAttribute('data-hue');
             const hue = hueAttr ? parseFloat(hueAttr) : undefined;
@@ -119,27 +96,22 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights, container,
     const updateAndNotify = () => { updateCanvas(); onRenderCompleteRef.current?.(); };
     updateAndNotify();
 
-    let cleanup: (() => void);
     const containerEl = container?.current;
+    const ro = new ResizeObserver(updateAndNotify);
+    ro.observe(containerEl ?? document.documentElement);
 
     if (containerEl) {
-      const ro = new ResizeObserver(() => updateAndNotify());
-      ro.observe(containerEl);
-      cleanup = () => ro.disconnect();
-    } else {
-      window.addEventListener('resize', updateAndNotify);
-      let observer: MutationObserver | undefined;
-      if (highlights === undefined) {
-        observer = new MutationObserver(() => updateAndNotify());
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-      }
-      cleanup = () => {
-        window.removeEventListener('resize', updateAndNotify);
-        observer?.disconnect();
-      };
+      return () => ro.disconnect();
     }
-
-    return cleanup;
+    let observer: MutationObserver | undefined;
+    if (highlights === undefined) {
+      observer = new MutationObserver(updateAndNotify);
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+    return () => {
+      ro.disconnect();
+      observer?.disconnect();
+    };
   }, [renderer, highlights, container]);
 
   return (
