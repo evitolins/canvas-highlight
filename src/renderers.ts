@@ -28,7 +28,6 @@ interface PenRendererConfig {
 /**
  * Get color from a numeric hue value or use default
  * @param hue - Hue value (0-360)
- * @param _defaultColor - Default fill style (unused, kept for call-site clarity)
  * @param defaultHue - Default hue value (0-360) if hue isn't specified
  * @param saturation - Saturation percentage (default 100)
  * @param lightness - Lightness percentage (default 50)
@@ -37,7 +36,6 @@ interface PenRendererConfig {
  */
 function getMarkColor(
   hue: number | null | undefined,
-  _defaultColor: string,
   defaultHue = 60,
   saturation = 100,
   lightness = 50,
@@ -50,9 +48,12 @@ function getMarkColor(
 /**
  * Simple rectangle renderer - draws basic filled rectangles
  */
-export function renderRectangle(ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta): void {
-  const defaultColor = 'rgba(255, 255, 0, 0.4)'; // Yellow fallback
-  const fillColor = getMarkColor(meta?.hue, defaultColor, 60, 100, 50, 0.4); // Yellow hue is 60
+export function renderRectangle(
+  ctx: CanvasRenderingContext2D,
+  rects: Rect[],
+  meta?: RendererMeta,
+): void {
+  const fillColor = getMarkColor(meta?.hue, 60, 100, 50, 0.4); // Yellow hue is 60
 
   rects.forEach((rect) => {
     ctx.fillStyle = fillColor;
@@ -67,7 +68,11 @@ export function renderRectangle(ctx: CanvasRenderingContext2D, rects: Rect[], me
  * - Slight angle variations for hand-drawn feel
  * - Multiple overlapping strokes for depth
  */
-export function renderMarker(ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta): void {
+export function renderMarker(
+  ctx: CanvasRenderingContext2D,
+  rects: Rect[],
+  meta?: RendererMeta,
+): void {
   const baseOpacity = 0.25;
 
   // Get hue from meta or use default yellow (60)
