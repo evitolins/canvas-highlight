@@ -8,7 +8,7 @@ export type { RendererMeta, Renderer } from './renderers';
 export type RenderMode = 'rectangle' | 'marker' | 'pen' | 'penScribble';
 
 export interface HighlightDescriptor {
-  range?: Range;
+  ranges?: Range[];
   rects?: Rect[];
   hue?: number;
   active?: boolean;
@@ -70,9 +70,11 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights, container,
       ctx.clearRect(0, 0, width, height);
 
       if (highlights !== undefined) {
-        const computed = highlights.flatMap(({ range, rects: precomputedRects, hue, active }) => {
-          const raw = range ? range.getClientRects() : precomputedRects;
-          if (!raw) return [];
+        const computed = highlights.flatMap(({ ranges, rects: precomputedRects, hue, active }) => {
+          const raw = ranges
+            ? ranges.flatMap(r => Array.from(r.getClientRects()))
+            : precomputedRects ?? [];
+          if (raw.length === 0) return [];
           const shifted = shiftRects(raw, offsetX, offsetY);
           return shifted.length ? [{ shifted, hue, active }] : [];
         });

@@ -33,7 +33,7 @@ export function App() {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
     const range = sel.getRangeAt(0).cloneRange();
-    setControlledHighlights((prev) => [...prev, { range, hue: nextHue }]);
+    setControlledHighlights((prev) => [...prev, { ranges: [range], hue: nextHue }]);
     setNextHue((h) => (h + 60) % 360);
     sel.removeAllRanges();
   };
