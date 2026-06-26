@@ -11,17 +11,19 @@
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `renderMode` | `string` | `'rectangle'` | Selects the highlight rendering style |
-| `highlights` | `Array \| undefined` | `undefined` | Controlled mode: array of `{ range?, rects?, hue? }` descriptors. When provided, `<mark>` scanning and `MutationObserver` are disabled. |
+| `highlights` | `Array \| undefined` | `undefined` | Controlled mode: array of `{ ranges?, rects?, hue?, active? }` descriptors. When provided, `<mark>` scanning and `MutationObserver` are disabled. |
+| `container` | `RefObject<Element \| null>` | `undefined` | Scopes the canvas to a scrollable container instead of the full document. The element must have `position: relative`. |
 
 **Highlight descriptor shape (`highlights` prop):**
 
 | Field | Type | Description |
 |---|---|---|
-| `range` | `Range` | Live DOM Range — rects re-queried on every draw, so highlights update correctly on resize |
+| `ranges` | `Range[]` | Live DOM Range objects — rects re-queried on every draw, so highlights update correctly on resize |
 | `rects` | `Array<{left,top,width,height}>` | Precomputed rects — fast, but caller must recompute on layout changes |
 | `hue` | `number` | HSL hue (0–360). Falls back to each renderer's default if omitted |
+| `active` | `boolean` | Marks this highlight as the focused one. When any descriptor has `active: true`, all others dim to a uniform grey fill so the active highlight stands out. |
 
-Exactly one of `range` or `rects` must be present per descriptor.
+Exactly one of `ranges` or `rects` must be present per descriptor.
 
 **Behavior:**
 
@@ -31,7 +33,7 @@ Exactly one of `range` or `rects` must be present per descriptor.
 - `MutationObserver` on `document.body` triggers redraws on DOM changes
 
 *Controlled mode* (`highlights` is an array):
-- Iterates the `highlights` array; resolves Range → rects on each draw if `range` is supplied
+- Iterates the `highlights` array; resolves Range → rects on each draw if `ranges` is supplied
 - `<mark>` elements in the DOM are ignored
 - No `MutationObserver` — redraws are driven by React re-renders when `highlights` changes
 
@@ -102,7 +104,7 @@ const [highlights, setHighlights] = useState([]);
 const capture = () => {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-  setHighlights((prev) => [...prev, { range: sel.getRangeAt(0).cloneRange(), hue: 200 }]);
+  setHighlights((prev) => [...prev, { ranges: [sel.getRangeAt(0).cloneRange()], hue: 200 }]);
 };
 
 return (
@@ -118,16 +120,17 @@ No external dependencies beyond React.
 
 ## Testing
 
-| Script | What it verifies |
+Run the full suite with:
+
+```bash
+npm run test:e2e
+```
+
+| Spec | What it verifies |
 |---|---|
-| `node test/verify_renderers.cjs` | Auto mode regression — all four render modes produce non-zero canvas pixels |
-| `node test/verify_controlled_mode.cjs` | Controlled mode — pixel parity with auto mode, empty-array isolation, auto mode restoration |
+| `active-flag.spec.ts` | Inactive highlights dim when `active` is set; no dimming when all/none are active |
+| `container.spec.ts` | Container-scoped canvas sizing, positioning, and rendering in both modes |
+| `controlled-mode.spec.ts` | Pixel parity with auto mode, empty-array isolation, auto mode restoration |
+| `renderers.spec.ts` | All four render modes produce non-zero canvas pixels |
 
-Both scripts require the dev server running on port 5200 (`npm run dev`). Screenshots are saved to `/tmp/`.
-
-`verify_controlled_mode.cjs` works by:
-1. Capturing the canvas pixel count in auto mode (rectangle renderer)
-2. Extracting precomputed rects from `<mark>` elements via the Range API
-3. Switching to controlled mode via `window.__testAPI` and injecting those rects as highlights
-4. Asserting the pixel count is identical (rectangle renderer uses `fillRect` with the same coordinates)
-5. Asserting `highlights=[]` renders nothing even with `<mark>` elements present in the DOM
+Tests use Playwright and drive the dev server via `window.__testAPI`. `helpers.ts` provides shared utilities including `getAlphaSum` (used by the active-flag tests to distinguish full-opacity renders from the 0.15-opacity dimmed grey fill).

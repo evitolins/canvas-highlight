@@ -75,7 +75,7 @@ Hue values (0–360): 0 = Red, 60 = Yellow (default), 120 = Green, 180 = Cyan, 2
 
 Pass an array of highlight descriptors to drive highlights from any data source. When `highlights` is provided, `<mark>` scanning and `MutationObserver` are both disabled.
 
-Each descriptor is `{ range?, rects?, hue? }` — supply either a live `Range` object or precomputed `rects` (array of `{ left, top, width, height }`).
+Each descriptor is `{ ranges?, rects?, hue?, active? }` — supply either live `Range` objects or precomputed `rects` (array of `{ left, top, width, height }`). When `active` is set on any descriptor, all other highlights dim to a subtle grey so the active one stands out.
 
 ```jsx
 // Highlight a user's text selection
@@ -84,7 +84,7 @@ const [highlights, setHighlights] = useState([]);
 const capture = () => {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
-  setHighlights((prev) => [...prev, { range: sel.getRangeAt(0).cloneRange(), hue: 200 }]);
+  setHighlights((prev) => [...prev, { ranges: [sel.getRangeAt(0).cloneRange()], hue: 200 }]);
 };
 
 return (
@@ -155,8 +155,11 @@ src/
 ├── App.tsx             # Demo app: mode selector + controlled mode UI (not in bundle)
 └── main.tsx            # Demo entry point (not in bundle)
 test/
-├── verify_renderers.cjs        # Auto mode regression: all four modes produce non-zero pixels
-└── verify_controlled_mode.cjs  # Controlled mode: parity, isolation, and round-trip tests
+├── active-flag.spec.ts      # Active/inactive highlight dimming behaviour
+├── container.spec.ts        # Container-scoped canvas sizing and rendering
+├── controlled-mode.spec.ts  # Controlled mode parity, isolation, and round-trip
+├── renderers.spec.ts        # All four render modes produce non-zero pixels
+└── helpers.ts               # Shared Playwright utilities (pixel counts, alpha sum)
 ```
 
 ## Performance Considerations

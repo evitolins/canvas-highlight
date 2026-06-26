@@ -1,5 +1,11 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { renderRectangle, renderMarker, renderPen, renderPenScribble, renderActiveOutline, shiftRects } from './renderers';
+import {
+  renderRectangle,
+  renderMarker,
+  renderPen,
+  renderPenScribble,
+  shiftRects,
+} from './renderers';
 import type { Rect, Renderer } from './renderers';
 
 export type { Rect } from './renderers';
@@ -48,7 +54,12 @@ const RENDER_MODES: Record<RenderMode, Renderer> = {
   penScribble: renderPenScribble,
 };
 
-export function CanvasOverlay({ renderMode = 'rectangle', highlights, container, onRenderComplete }: CanvasOverlayProps) {
+export function CanvasOverlay({
+  renderMode = 'rectangle',
+  highlights,
+  container,
+  onRenderComplete,
+}: CanvasOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderer = RENDER_MODES[renderMode] || renderRectangle;
   // Keep a ref so the effect never needs onRenderComplete in its dep array,
@@ -72,14 +83,24 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights, container,
       if (highlights !== undefined) {
         const computed = highlights.flatMap(({ ranges, rects: precomputedRects, hue, active }) => {
           const raw = ranges
-            ? ranges.flatMap(r => Array.from(r.getClientRects()))
-            : precomputedRects ?? [];
+            ? ranges.flatMap((r) => Array.from(r.getClientRects()))
+            : (precomputedRects ?? []);
           if (raw.length === 0) return [];
           const shifted = shiftRects(raw, offsetX, offsetY);
           return shifted.length ? [{ shifted, hue, active }] : [];
         });
-        computed.forEach(({ shifted, hue }) => renderer(ctx, shifted, { hue }));
-        computed.filter(h => h.active).forEach(({ shifted }) => renderActiveOutline(ctx, shifted));
+        const anyActive = computed.some((h) => h.active);
+        computed.forEach(({ shifted, hue, active }) => {
+          if (anyActive && !active) {
+            // Bypass the renderer with a fixed grey fill so all inactive highlights are
+            // visually uniform — desaturating via ctx.filter still produces different greys
+            // because luminance varies per hue.
+            ctx.fillStyle = 'rgba(140, 140, 140, 0.15)';
+            shifted.forEach((r) => ctx.fillRect(r.left, r.top, r.width, r.height));
+          } else {
+            renderer(ctx, shifted, { hue });
+          }
+        });
       } else {
         // Auto mode: scan <mark> elements
         document.querySelectorAll('mark').forEach((mark) => {
@@ -95,7 +116,10 @@ export function CanvasOverlay({ renderMode = 'rectangle', highlights, container,
       }
     };
 
-    const updateAndNotify = () => { updateCanvas(); onRenderCompleteRef.current?.(); };
+    const updateAndNotify = () => {
+      updateCanvas();
+      onRenderCompleteRef.current?.();
+    };
     updateAndNotify();
 
     const containerEl = container?.current;

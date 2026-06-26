@@ -18,8 +18,10 @@ export function App() {
       setHighlights: setControlledHighlights,
       setContainerMode,
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return () => { delete (window as any).__testAPI; };
+    return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__testAPI;
+    };
   }, [setControlledMode, setControlledHighlights, setContainerMode]);
 
   const onRenderComplete = () => {
@@ -51,7 +53,14 @@ export function App() {
       <div className="container">
         <h1>canvas-highlight</h1>
 
-        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#f0f0f0',
+            borderRadius: '8px',
+          }}
+        >
           <strong>Rendering Mode:</strong>
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
             {(['rectangle', 'marker', 'pen', 'penScribble'] as RenderMode[]).map((mode) => (
@@ -76,11 +85,20 @@ export function App() {
             {renderMode === 'rectangle' && 'Simple filled rectangles - precise and efficient'}
             {renderMode === 'marker' && 'Realistic marker with soft edges and stroke variations'}
             {renderMode === 'pen' && 'Pen/underline style with wavy strokes'}
-            {renderMode === 'penScribble' && 'Pen scribble — high-frequency waves drawn over the text'}
+            {renderMode === 'penScribble' &&
+              'Pen scribble — high-frequency waves drawn over the text'}
           </p>
         </div>
 
-        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#e8f4e8', borderRadius: '8px', border: '1px solid #b0d8b0' }}>
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#e8f4e8',
+            borderRadius: '8px',
+            border: '1px solid #b0d8b0',
+          }}
+        >
           <strong>Controlled Mode:</strong>
           <p style={{ fontSize: '14px', color: '#444', marginTop: '8px' }}>
             Toggle controlled mode to drive highlights from React state instead of{' '}
@@ -131,15 +149,24 @@ export function App() {
           </div>
         </div>
 
-        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#f9f9f9',
+            borderRadius: '8px',
+          }}
+        >
           <strong>Custom Hue Support:</strong>
           <p style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-            Use the <code>data-hue</code> attribute on <code>&lt;mark&gt;</code> elements to set custom colors.
-            Hue values range from 0-360 (0=Red, 60=Yellow, 120=Green, 180=Cyan, 240=Blue, 300=Magenta).
+            Use the <code>data-hue</code> attribute on <code>&lt;mark&gt;</code> elements to set
+            custom colors. Hue values range from 0-360 (0=Red, 60=Yellow, 120=Green, 180=Cyan,
+            240=Blue, 300=Magenta).
           </p>
           <p>
-            Example: <mark data-hue="0">Red hue (0)</mark>, <mark data-hue="120">Green hue (120)</mark>,{' '}
-            <mark data-hue="240">Blue hue (240)</mark>, or <mark data-hue="300">Magenta hue (300)</mark>.
+            Example: <mark data-hue="0">Red hue (0)</mark>,{' '}
+            <mark data-hue="120">Green hue (120)</mark>, <mark data-hue="240">Blue hue (240)</mark>,
+            or <mark data-hue="300">Magenta hue (300)</mark>.
           </p>
         </div>
 
@@ -159,8 +186,8 @@ export function App() {
           )}
 
           <p>
-            This is a demo of a <mark>canvas overlay</mark> that renders highlighter
-            strokes above marked text.
+            This is a demo of a <mark>canvas overlay</mark> that renders highlighter strokes above
+            marked text.
           </p>
 
           <p>
@@ -169,19 +196,24 @@ export function App() {
           </p>
 
           <p>
-            Try scrolling down to see the overlay <mark data-hue="300">follow your scroll</mark> position.
+            Try scrolling down to see the overlay <mark data-hue="300">follow your scroll</mark>{' '}
+            position.
           </p>
 
           <p>
-            <strong>Multi-line test:</strong> The component handles text that <mark data-hue="30">wraps across multiple
-            lines by using the Range API to get individual rectangles for each line</mark> of text.
-            This gives accurate highlighting for longer marked sections regardless of the rendering mode.
+            <strong>Multi-line test:</strong> The component handles text that{' '}
+            <mark data-hue="30">
+              wraps across multiple lines by using the Range API to get individual rectangles for
+              each line
+            </mark>{' '}
+            of text. This gives accurate highlighting for longer marked sections regardless of the
+            rendering mode.
           </p>
 
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do <mark>eiusmod tempor</mark>{' '}
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do{' '}
+            <mark>eiusmod tempor</mark> incididunt ut labore et dolore magna aliqua. Ut enim ad
+            minim veniam, quis nostrud exercitation ullamco laboris.
           </p>
 
           <p>

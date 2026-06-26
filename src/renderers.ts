@@ -291,17 +291,3 @@ export const renderPenScribble: Renderer = createPenRenderer({
   strokeWidth: 1.5,
   baseOpacity: 0.45,
 });
-
-/**
- * Draws a dashed outline around each rect — used for the active/selected highlight state.
- */
-export function renderActiveOutline(ctx: CanvasRenderingContext2D, rects: Rect[]): void {
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0, 127, 212, 0.9)';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 3]);
-  rects.forEach((rect) => {
-    ctx.strokeRect(rect.left - 1, rect.top - 1, rect.width + 2, rect.height + 2);
-  });
-  ctx.restore();
-}
