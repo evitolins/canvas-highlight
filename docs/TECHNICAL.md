@@ -52,25 +52,13 @@ All renderers share the signature `(ctx, rects, meta)` where `meta` is a plain o
 
 ### Renderer Architecture
 
-`renderPen` and `renderPenScribble` are both produced by `createPenRenderer`, a factory function that accepts a config object:
-
-```js
-createPenRenderer({
-  getBaseY,     // (y, height, passIndex, totalPasses) => number
-  getAmplitude, // pixels, or (height) => pixels
-  frequency,    // angular frequency in radians/pixel
-  passCount,    // number of overlapping strokes per rect
-  strokeWidth,
-  baseOpacity,
-  defaultHue,
-})
-```
+`renderPen` and `renderPenScribble` are both produced by `createPenRenderer` in [`src/renderers.ts`](../src/renderers.ts) — a factory that takes a config controlling base Y position, amplitude, frequency, pass count, stroke width, opacity, and default hue. See the factory's config type in the source for the authoritative shape.
 
 `renderMarker` uses `drawMarkerStroke` internally, which applies canvas `save/restore`, linear gradients for feathering, and a randomized jagged path for organic edge variation.
 
 ### Color Resolution
 
-All renderers call the internal `getMarkColor(hue, defaultColor, defaultHue, saturation, lightness, alpha)` helper, which resolves to `hsla(resolvedHue, sat%, light%, alpha)`. `hue` comes from `meta?.hue`; if `null`/`undefined`, `defaultHue` is used.
+All renderers resolve color through an internal helper in [`src/renderers.ts`](../src/renderers.ts). `hue` comes from `meta?.hue`; if absent, each renderer falls back to its own default hue. The resolved value is passed to canvas as an `hsla()` string.
 
 In auto mode, `CanvasOverlay` reads `data-hue` from each `<mark>` element and passes the parsed float as `meta.hue`. In controlled mode, the caller sets `hue` directly on each highlight descriptor.
 

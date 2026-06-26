@@ -21,19 +21,9 @@ The boundary is sharp: anything not exported from `src/index.ts` is not in the p
 
 ## Key Types
 
-All types live in `src/CanvasOverlay.tsx` and `src/renderers.ts` and are re-exported from `src/index.ts`.
+All public types are defined in [`src/CanvasOverlay.tsx`](src/CanvasOverlay.tsx) and [`src/renderers.ts`](src/renderers.ts) and re-exported from [`src/index.ts`](src/index.ts). Read those files for the authoritative signatures — don't rely on copies here.
 
-```ts
-// src/renderers.ts
-interface Rect { left: number; top: number; width: number; height: number }
-interface RendererMeta { hue?: number }
-type Renderer = (ctx: CanvasRenderingContext2D, rects: Rect[], meta?: RendererMeta) => void
-
-// src/CanvasOverlay.tsx
-type RenderMode = 'rectangle' | 'marker' | 'pen' | 'penScribble'
-interface HighlightDescriptor { range?: Range; rects?: Rect[]; hue?: number }
-interface CanvasOverlayProps { renderMode?: RenderMode; highlights?: HighlightDescriptor[] }
-```
+Briefly: `HighlightDescriptor` carries the source geometry (`ranges` or `rects`), an optional `hue`, and an optional `active` flag. `CanvasOverlayProps` is the component's prop surface. `Renderer` is the function signature all render strategies conform to.
 
 ## Adding a New Renderer
 
@@ -55,13 +45,11 @@ npm run format       # Prettier on src/
 
 ## Test Commands
 
-Playwright tests require the dev server to be running on port 5200:
-
 ```bash
-npm run dev &                          # start server in background
-node test/verify_renderers.cjs         # smoke-test all four render modes
-node test/verify_controlled_mode.cjs   # test controlled mode highlight API
+npm run test:e2e   # runs all Playwright specs (starts its own server via webServer config)
 ```
+
+Specs live in `test/`. See [`test/helpers.ts`](test/helpers.ts) for shared utilities.
 
 ## What NOT to Include in the Library Entry
 

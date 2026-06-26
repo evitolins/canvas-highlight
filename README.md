@@ -97,7 +97,38 @@ return (
 );
 ```
 
-Precomputed rects (useful when Range objects are unavailable):
+### Active highlight
+
+Set `active: true` on one descriptor to focus it — all other highlights dim to a subtle grey so the active one stands out. Useful for search results, selected annotations, or step-by-step walkthroughs.
+
+```jsx
+const [highlights, setHighlights] = useState([
+  { ranges: [rangeA], hue: 200 },
+  { ranges: [rangeB], hue: 60 },
+  { ranges: [rangeC], hue: 120 },
+]);
+const [activeIndex, setActiveIndex] = useState(0);
+
+const activeHighlights = highlights.map((h, i) => ({
+  ...h,
+  active: i === activeIndex,
+}));
+
+return (
+  <>
+    <CanvasOverlay highlights={activeHighlights} />
+    <button onClick={() => setActiveIndex((i) => (i + 1) % highlights.length)}>
+      Next
+    </button>
+  </>
+);
+```
+
+When no descriptor has `active: true` (or all do), every highlight renders at full opacity.
+
+### Precomputed rects
+
+Useful when `Range` objects are unavailable:
 
 ```jsx
 <CanvasOverlay renderMode="rectangle" highlights={[
