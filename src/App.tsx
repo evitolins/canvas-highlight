@@ -51,8 +51,9 @@ export function App() {
       )}
 
       <div className="container">
-        <h1>canvas-highlight</h1>
-
+        <h1>
+          <mark>canvas-highlight</mark>
+        </h1>
         <div
           style={{
             marginBottom: '24px',
@@ -84,9 +85,8 @@ export function App() {
           <p style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
             {renderMode === 'rectangle' && 'Simple filled rectangles - precise and efficient'}
             {renderMode === 'marker' && 'Realistic marker with soft edges and stroke variations'}
-            {renderMode === 'pen' && 'Pen/underline style with wavy strokes'}
-            {renderMode === 'penScribble' &&
-              'Pen scribble — high-frequency waves drawn over the text'}
+            {renderMode === 'pen' && 'Organic pen strokes to underline your content'}
+            {renderMode === 'penScribble' && 'Pen scribble — When you want to cross-something out'}
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export function App() {
             240=Blue, 300=Magenta).
           </p>
           <p>
-            Example: <mark data-hue="0">Red hue (0)</mark>,{' '}
+            Example: <mark>Default hue</mark>, <mark data-hue="0">Red hue (0)</mark>,{' '}
             <mark data-hue="120">Green hue (120)</mark>, <mark data-hue="240">Blue hue (240)</mark>,
             or <mark data-hue="300">Magenta hue (300)</mark>.
           </p>
