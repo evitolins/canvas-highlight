@@ -20,8 +20,8 @@ test('container mode sizes canvas to container scrollWidth and scrollHeight', as
   );
 
   const dims = await page.evaluate(() => {
-    const canvas = document.querySelector('canvas')!;
     const container = document.querySelector('[data-testid="content-container"]')!;
+    const canvas = container.querySelector('canvas')!;
     return {
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
