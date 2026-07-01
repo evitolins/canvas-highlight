@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-07-01
+
+### Added
+- `HighlightDescriptor.renderMode` — each highlight can now override the component-level `renderMode` prop, enabling mixed render styles in a single `CanvasOverlay` instance
+- `padRects(rects, paddingH, paddingV)` exported as a public utility for custom renderer authors
+
+### Changed
+- Each built-in renderer now applies its own internal padding via `padRects` (rectangle: 3 px H / 2 px V; marker: 4 px H; pen/penScribble: 2 px H)
+- Canvas uses `mix-blend-mode: multiply` so overlapping highlights composite like real ink
+- Demo: Controlled Mode toggle replaced with an animated CSS switch; new showcase section demonstrates all four render modes side-by-side
+- `renderMarker`: fix stroke count (was always 2, now 1–3), rotate strokes around their center, increased edge roughness
+
 ## [0.3.0] - 2026-06-26
 
 ### Changed
