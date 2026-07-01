@@ -18,6 +18,7 @@ export interface HighlightDescriptor {
   rects?: Rect[];
   hue?: number;
   active?: boolean;
+  renderMode?: RenderMode;
 }
 
 export interface CanvasOverlayProps {
@@ -81,16 +82,18 @@ export function CanvasOverlay({
       ctx.clearRect(0, 0, width, height);
 
       if (highlights !== undefined) {
-        const computed = highlights.flatMap(({ ranges, rects: precomputedRects, hue, active }) => {
-          const raw = ranges
-            ? ranges.flatMap((r) => Array.from(r.getClientRects()))
-            : (precomputedRects ?? []);
-          if (raw.length === 0) return [];
-          const shifted = shiftRects(raw, offsetX, offsetY);
-          return shifted.length ? [{ shifted, hue, active }] : [];
-        });
+        const computed = highlights.flatMap(
+          ({ ranges, rects: precomputedRects, hue, active, renderMode: highlightRenderMode }) => {
+            const raw = ranges
+              ? ranges.flatMap((r) => Array.from(r.getClientRects()))
+              : (precomputedRects ?? []);
+            if (raw.length === 0) return [];
+            const shifted = shiftRects(raw, offsetX, offsetY);
+            return shifted.length ? [{ shifted, hue, active, highlightRenderMode }] : [];
+          },
+        );
         const anyActive = computed.some((h) => h.active);
-        computed.forEach(({ shifted, hue, active }) => {
+        computed.forEach(({ shifted, hue, active, highlightRenderMode }) => {
           if (anyActive && !active) {
             // Bypass the renderer with a fixed grey fill so all inactive highlights are
             // visually uniform — desaturating via ctx.filter still produces different greys
@@ -98,7 +101,10 @@ export function CanvasOverlay({
             ctx.fillStyle = 'rgba(140, 140, 140, 0.15)';
             shifted.forEach((r) => ctx.fillRect(r.left, r.top, r.width, r.height));
           } else {
-            renderer(ctx, shifted, { hue });
+            const r = highlightRenderMode
+              ? (RENDER_MODES[highlightRenderMode] ?? renderRectangle)
+              : renderer;
+            r(ctx, shifted, { hue });
           }
         });
       } else {
@@ -143,7 +149,14 @@ export function CanvasOverlay({
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1000 }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        pointerEvents: 'none',
+        zIndex: 1000,
+        mixBlendMode: 'multiply',
+      }}
     />
   );
 }

@@ -75,7 +75,7 @@ Hue values (0–360): 0 = Red, 60 = Yellow (default), 120 = Green, 180 = Cyan, 2
 
 Pass an array of highlight descriptors to drive highlights from any data source. When `highlights` is provided, `<mark>` scanning and `MutationObserver` are both disabled.
 
-Each descriptor is `{ ranges?, rects?, hue?, active? }` — supply either live `Range` objects or precomputed `rects` (array of `{ left, top, width, height }`). When `active` is set on any descriptor, all other highlights dim to a subtle grey so the active one stands out.
+Each descriptor is `{ ranges?, rects?, hue?, active?, renderMode? }` — supply either live `Range` objects or precomputed `rects` (array of `{ left, top, width, height }`). When `active` is set on any descriptor, all other highlights dim to a subtle grey so the active one stands out. Set `renderMode` on a descriptor to override the component-level mode for that highlight only.
 
 ```jsx
 // Highlight a user's text selection
@@ -95,6 +95,20 @@ return (
     <p>Select any text on this page and click Capture.</p>
   </>
 );
+```
+
+### Per-highlight render mode
+
+Each descriptor can override the component-level `renderMode` with its own. Useful for mixing highlight styles — e.g. marking something with a rectangle while striking through something else with `penScribble`.
+
+```jsx
+<CanvasOverlay
+  renderMode="marker"
+  highlights={[
+    { ranges: [rangeA], hue: 60 },                           // uses component default (marker)
+    { ranges: [rangeB], hue: 0, renderMode: 'penScribble' }, // overrides to penScribble
+  ]}
+/>
 ```
 
 ### Active highlight

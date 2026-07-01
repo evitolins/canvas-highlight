@@ -28,6 +28,15 @@ export function shiftRects(
   }));
 }
 
+export function padRects(rects: Rect[], paddingH: number, paddingV: number): Rect[] {
+  return rects.map((r) => ({
+    left: r.left - paddingH,
+    top: r.top - paddingV,
+    width: r.width + paddingH * 2,
+    height: r.height + paddingV * 2,
+  }));
+}
+
 interface PenRendererConfig {
   getBaseY: (y: number, height: number, passIndex: number, totalPasses: number) => number;
   getAmplitude: number | ((height: number) => number);
@@ -68,7 +77,7 @@ export function renderRectangle(
 ): void {
   const fillColor = getMarkColor(meta?.hue, 60, 100, 50, 0.4); // Yellow hue is 60
 
-  rects.forEach((rect) => {
+  padRects(rects, 3, 2).forEach((rect) => {
     ctx.fillStyle = fillColor;
     ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
   });
@@ -86,12 +95,12 @@ export function renderMarker(
   rects: Rect[],
   meta?: RendererMeta,
 ): void {
-  const baseOpacity = 0.25;
+  const baseOpacity = 0.35;
 
   // Get hue from meta or use default yellow (60)
   const hue = meta?.hue ?? 60;
 
-  rects.forEach((rect) => {
+  padRects(rects, 4, 0).forEach((rect) => {
     const x = rect.left;
     const y = rect.top;
     const width = rect.width;
@@ -101,12 +110,13 @@ export function renderMarker(
     const markerHeight = height * 1.3;
 
     // Draw 2-3 overlapping strokes with slight variations for natural look
-    const strokeCount = 2 + Math.random(); // 2-3 strokes
-    for (let i = 0; i < Math.floor(strokeCount); i++) {
+    const strokeCount = Math.floor(3 * Math.random()) + 1; // 2-3 strokes
+    for (let i = 0; i < strokeCount; i++) {
       // Small vertical offset for each stroke (within the text bounds)
       const offsetY = y + height / 2 + (Math.random() - 0.5) * height * 0.2;
+
       // Slight angle for each stroke
-      const angle = (Math.random() - 0.5) * 0.02;
+      const angle = (Math.random() - 0.5) * 0.03;
 
       // Draw the main stroke with gradient for soft edges
       drawMarkerStroke(ctx, x, offsetY, width, markerHeight, angle, hue, baseOpacity);
@@ -141,16 +151,18 @@ function drawMarkerStroke(
 
   ctx.translate(x, y);
 
-  // Apply slight rotation for natural feel
+  // Apply slight rotation from center for natural feel
   if (angle) {
+    ctx.translate(width / 2, height / 2);
     ctx.rotate(angle);
+    ctx.translate(-width / 2, -height / 2);
   }
 
   // Draw with the feathered gradient
   ctx.fillStyle = gradient;
 
   // Add roughness to the edges for hand-drawn feel
-  const roughness = 1.5; // Increased for more vertical variation
+  const roughness = 3.5; // Increased for more vertical variation
   const edgePointSpacing = 1.5; // More frequent sampling for jagged edges
 
   // Pen angle effect - varies along the stroke length
@@ -186,35 +198,31 @@ function drawMarkerStroke(
   ctx.closePath();
   ctx.fill();
 
-  const includeDetails = true;
-  if (includeDetails) {
-    // Add darker caps at beginning and end for ink bleed effect (3-10% of width)
-    const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
+  // Add darker caps at beginning and end for ink bleed effect (3-10% of width)
+  const capWidth = width * (0.03 + Math.random() * 0.17); // Random 3-10% of width
 
-    // Left edge cap (darker, more opaque) - reduced effect by 20%
-    const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
-    leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.84})`);
-    leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
+  // Left edge cap (darker, more opaque) - reduced effect by 20%
+  const leftCapGradient = ctx.createLinearGradient(-capWidth, -height / 2, capWidth, -height / 2);
+  leftCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
+  leftCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.84})`);
+  leftCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
-    ctx.fillStyle = leftCapGradient;
-    ctx.fillRect(0, -height / 2, capWidth, height);
+  ctx.fillStyle = leftCapGradient;
+  ctx.fillRect(0, -height / 2, capWidth, height);
 
-    // Right edge cap (darker, more opaque) - reduced effect by 20%
-    const rightCapGradient = ctx.createLinearGradient(
-      width - capWidth,
-      -height / 2,
-      width + capWidth,
-      -height / 2,
-    );
-    rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
-    rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.5})`);
-    rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
+  // Right edge cap (darker, more opaque) - reduced effect by 20%
+  const rightCapGradient = ctx.createLinearGradient(
+    width - capWidth,
+    -height / 2,
+    width + capWidth,
+    -height / 2,
+  );
+  rightCapGradient.addColorStop(0, `hsla(${hue}, 100%, 45%, 0)`);
+  rightCapGradient.addColorStop(0.5, `hsla(${hue}, 100%, 40%, ${opacity * 0.5})`);
+  rightCapGradient.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
 
-    ctx.fillStyle = rightCapGradient;
-    ctx.fillRect(width - capWidth, -height / 2, capWidth, height);
-  }
-
+  ctx.fillStyle = rightCapGradient;
+  ctx.fillRect(width - capWidth, -height / 2, capWidth, height);
   ctx.restore();
 }
 
@@ -234,7 +242,7 @@ function createPenRenderer({
     const hue = meta?.hue ?? defaultHue;
     const seed = Math.random() * 10;
 
-    rects.forEach((rect) => {
+    padRects(rects, 2, 0).forEach((rect) => {
       const x = rect.left;
       const y = rect.top;
       const width = rect.width;

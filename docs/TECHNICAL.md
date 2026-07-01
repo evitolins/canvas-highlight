@@ -10,8 +10,8 @@
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `renderMode` | `string` | `'rectangle'` | Selects the highlight rendering style |
-| `highlights` | `Array \| undefined` | `undefined` | Controlled mode: array of `{ ranges?, rects?, hue?, active? }` descriptors. When provided, `<mark>` scanning and `MutationObserver` are disabled. |
+| `renderMode` | `RenderMode` | `'rectangle'` | Default rendering style for all highlights |
+| `highlights` | `Array \| undefined` | `undefined` | Controlled mode: array of highlight descriptors. When provided, `<mark>` scanning and `MutationObserver` are disabled. |
 | `container` | `RefObject<Element \| null>` | `undefined` | Scopes the canvas to a scrollable container instead of the full document. The element must have `position: relative`. |
 
 **Highlight descriptor shape (`highlights` prop):**
@@ -22,6 +22,7 @@
 | `rects` | `Array<{left,top,width,height}>` | Precomputed rects — fast, but caller must recompute on layout changes |
 | `hue` | `number` | HSL hue (0–360). Falls back to each renderer's default if omitted |
 | `active` | `boolean` | Marks this highlight as the focused one. When any descriptor has `active: true`, all others dim to a uniform grey fill so the active highlight stands out. |
+| `renderMode` | `RenderMode` | Overrides the component-level `renderMode` for this highlight only. Falls back to the component prop when absent. |
 
 Exactly one of `ranges` or `rects` must be present per descriptor.
 
@@ -49,6 +50,12 @@ All renderers share the signature `(ctx, rects, meta)` where `meta` is a plain o
 | `marker` | 60 (yellow) | Multi-stroke effect with feathered vertical gradient, jagged path edges, slight random rotation, and ink-bleed caps at stroke ends |
 | `pen` | 240 (blue) | Single wavy underline below the text (low-frequency sine wave) |
 | `penScribble` | 240 (blue) | 5 overlapping high-frequency sine wave passes spanning the text height, simulating a scribble-over effect |
+
+### Padding
+
+Each renderer applies its own internal padding via the exported `padRects(rects, paddingH, paddingV)` helper before drawing. This keeps the padding semantically tied to the render style — the marker extends 4 px horizontally to let ink-bleed effects breathe; the rectangle adds 3 px horizontal / 2 px vertical for a small cushion; the pen renderers extend 2 px horizontally so wave ends aren't clipped.
+
+`padRects` is exported from the package for use in custom renderers.
 
 ### Renderer Architecture
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CanvasOverlay } from './CanvasOverlay';
 import type { HighlightDescriptor, RenderMode } from './CanvasOverlay';
 
@@ -9,6 +9,28 @@ export function App() {
   const [nextHue, setNextHue] = useState(200);
   const [containerMode, setContainerMode] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const showcaseRef = useRef<HTMLDivElement>(null);
+  const rectRef = useRef<HTMLSpanElement>(null);
+  const markerRef = useRef<HTMLSpanElement>(null);
+  const penRef = useRef<HTMLSpanElement>(null);
+  const scribbleRef = useRef<HTMLSpanElement>(null);
+  const [showcaseHighlights, setShowcaseHighlights] = useState<HighlightDescriptor[]>([]);
+
+  useEffect(() => {
+    const entries: [React.RefObject<HTMLSpanElement | null>, RenderMode, number][] = [
+      [rectRef, 'rectangle', 60],
+      [markerRef, 'marker', 200],
+      [penRef, 'pen', 280],
+      [scribbleRef, 'penScribble', 0],
+    ];
+    setShowcaseHighlights(
+      entries.flatMap(([ref, mode, hue]) => {
+        const el = ref.current;
+        if (!el) return [];
+        return [{ rects: [el.getBoundingClientRect()], renderMode: mode, hue }];
+      }),
+    );
+  }, []);
 
   // Expose test API for Playwright e2e tests
   useEffect(() => {
@@ -42,6 +64,14 @@ export function App() {
 
   return (
     <>
+      <style>{`
+        .toggle { position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer; }
+        .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .toggle span { position: absolute; inset: 0; background: #ccc; border-radius: 24px; transition: background 0.2s; }
+        .toggle span::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+        .toggle input:checked + span { background: #28a745; }
+        .toggle input:checked + span::before { transform: translateX(20px); }
+      `}</style>
       {!containerMode && (
         <CanvasOverlay
           renderMode={renderMode}
@@ -99,25 +129,22 @@ export function App() {
             border: '1px solid #b0d8b0',
           }}
         >
-          <strong>Controlled Mode:</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <strong>Controlled Mode:</strong>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={controlledMode}
+                onChange={() => setControlledMode((m) => !m)}
+              />
+              <span />
+            </label>
+          </div>
           <p style={{ fontSize: '14px', color: '#444', marginTop: '8px' }}>
             Toggle controlled mode to drive highlights from React state instead of{' '}
             <code>&lt;mark&gt;</code> elements. Select text below then click "Capture Selection".
           </p>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-            <button
-              onClick={() => setControlledMode((m) => !m)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: controlledMode ? '#28a745' : '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              {controlledMode ? 'Controlled mode ON' : 'Controlled mode OFF'}
-            </button>
             <button
               onClick={captureSelection}
               disabled={!controlledMode}
@@ -147,6 +174,29 @@ export function App() {
               Clear ({controlledHighlights.length})
             </button>
           </div>
+        </div>
+
+        <div
+          ref={showcaseRef}
+          style={{
+            position: 'relative',
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#f9f5ff',
+            borderRadius: '8px',
+            border: '1px solid #d0b8f0',
+          }}
+        >
+          <CanvasOverlay highlights={showcaseHighlights} container={showcaseRef} />
+          <strong>Per-Highlight Render Mode:</strong>
+          <p style={{ fontSize: '14px', color: '#444', marginTop: '8px' }}>
+            Each highlight in <code>highlights</code> can specify its own <code>renderMode</code>,
+            overriding the component-level default. Here all four are shown together:{' '}
+            <span ref={rectRef}>rectangle</span> for clean fills,{' '}
+            <span ref={markerRef}>marker</span> for a hand-drawn highlighter look,{' '}
+            <span ref={penRef}>ballpoint pen</span> for an organic underline, and{' '}
+            <span ref={scribbleRef}>penScribble</span> to strike something out.
+          </p>
         </div>
 
         <div
