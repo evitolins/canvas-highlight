@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-07-09
+
+### Changed
+- `renderPenScribble`: rewritten for a more organic, hand-drawn look — combines three incommensurable wave frequencies so the waveform never visibly repeats, adds a low-frequency drift wave to the baseline so each pass wanders naturally, and randomizes the start/end x position of each pass for a ragged edge
+- `renderPenScribble`: canvas stroke properties are now set once per render call rather than once per rect, reducing redundant Canvas 2D state writes
+
 ## [0.3.1] - 2026-07-01
 
 ### Added

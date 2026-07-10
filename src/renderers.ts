@@ -285,17 +285,63 @@ export const renderPen: Renderer = createPenRenderer({
 });
 
 /**
- * Pen scribble renderer - high-frequency waves drawn over the text,
- * spanning the full text height across multiple passes.
+ * Pen scribble renderer - irregular overlapping waves drawn over the text.
+ * Combines three incommensurable frequencies so the waveform never repeats visibly.
+ * A low-frequency drift wave offsets the baseline of each pass to mimic the gentle
+ * vertical wander of a moving hand.
  */
-export const renderPenScribble: Renderer = createPenRenderer({
-  // Distribute passes evenly across the text height so combined coverage exceeds it
-  getBaseY: (y, height, p, total) =>
-    y + height / 2 + (p / Math.max(total - 1, 1) - 0.5) * height * 0.5,
-  // Amplitude slightly exceeds half the text height so the wave clips beyond text bounds
-  getAmplitude: (height) => height * 0.32,
-  frequency: 0.3,
-  passCount: 5,
-  strokeWidth: 1.5,
-  baseOpacity: 0.45,
-});
+export function renderPenScribble(
+  ctx: CanvasRenderingContext2D,
+  rects: Rect[],
+  meta?: RendererMeta,
+): void {
+  const hue = meta?.hue ?? 240;
+  const frequency = 4;
+  // Step adapts to frequency so curves always have enough samples per cycle
+  const step = Math.max(1, 2 / frequency);
+
+  ctx.strokeStyle = `hsla(${hue}, 100%, 50%, 0.45)`;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  padRects(rects, 2, 0).forEach((rect) => {
+    const { left: x, top: y, width, height } = rect;
+
+    const passCount = 3;
+    const seed = Math.random() * 100;
+    // Low-frequency drift wave simulates the gentle vertical wander of a moving hand
+    const driftFreq = 0.008;
+    const driftAmplitude = height * 0.08;
+    const driftPhase = Math.random() * Math.PI * 2;
+
+    for (let p = 0; p < passCount; p++) {
+      const passSeed = seed + p * 37.3;
+      const passOffset = (p / Math.max(passCount - 1, 1) - 0.5) * height * 0.5;
+      const amplitude = height * 0.32;
+
+      // Slightly randomize start/end x per pass to avoid a uniform left/right edge
+      const startX = x + (Math.random() - 0.5) * 6;
+      const endX = x + width + (Math.random() - 0.5) * 6;
+      const passWidth = endX - startX;
+
+      ctx.beginPath();
+
+      for (let i = 0; i <= passWidth; i += step) {
+        // Three incommensurable frequencies produce a quasi-random waveform
+        const yOffset =
+          Math.sin(i * 0.28 * frequency + passSeed) * amplitude * 0.55 +
+          Math.sin(i * 0.17 * frequency + passSeed * 1.9) * amplitude * 0.3 +
+          Math.sin(i * 0.43 * frequency + passSeed * 0.7) * amplitude * 0.15;
+
+        const drift = Math.sin(i * driftFreq + driftPhase) * driftAmplitude;
+        const baseY = y + height / 2 + passOffset + drift;
+
+        // First lineTo on an empty path acts as moveTo per the Canvas 2D spec
+        ctx.lineTo(startX + i, baseY + yOffset);
+      }
+
+      ctx.stroke();
+    }
+  });
+}
