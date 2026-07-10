@@ -22,6 +22,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:demo": "vite build --base /canvas-highlight/",
     "build:lib": "vite build --config vite.lib.config.ts",
     "preview": "vite preview",
     "lint": "eslint src",
