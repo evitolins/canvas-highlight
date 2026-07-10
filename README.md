@@ -31,6 +31,10 @@ import { CanvasOverlay } from 'canvas-highlight';
 
 ### Running the demo
 
+A live demo is available at **https://evitolins.github.io/canvas-highlight/**.
+
+To run it locally:
+
 ```bash
 npm install
 npm run dev      # http://localhost:5200
