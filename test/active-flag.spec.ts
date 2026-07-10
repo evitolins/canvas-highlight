@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { waitForRenderAfter, getAlphaSum } from './helpers';
+import { waitForRenderAfter, getAlphaSum, waitForCanvasPixels } from './helpers';
 
 type TestAPI = {
   setControlledMode: (v: boolean) => void;
@@ -26,9 +26,7 @@ async function getTwoMarkRects(page: Page): Promise<[MarkRects, MarkRects]> {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.waitForFunction(
-    () => ((window as unknown as Record<string, number>).__renderCount ?? 0) > 0,
-  );
+  await waitForCanvasPixels(page);
 });
 
 test('inactive highlight dims to lower-alpha grey when another is active', async ({ page }) => {

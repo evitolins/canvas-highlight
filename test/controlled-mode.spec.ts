@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { waitForRenderAfter, getNonZeroPixelCount } from './helpers';
+import { waitForRenderAfter, getNonZeroPixelCount, waitForCanvasPixels } from './helpers';
 
 interface HighlightRect {
   left: number;
@@ -35,8 +35,7 @@ async function extractMarkHighlights(page: Page): Promise<HighlightDescriptor[]>
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  // Wait for the initial draw to complete (rectangle mode by default)
-  await page.waitForFunction(() => ((window as unknown as Record<string, number>).__renderCount ?? 0) > 0);
+  await waitForCanvasPixels(page);
 });
 
 test('auto mode renders non-zero pixels', async ({ page }) => {

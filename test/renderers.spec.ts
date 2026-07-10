@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { waitForRenderAfter, getNonZeroPixelCount } from './helpers';
+import { waitForRenderAfter, getNonZeroPixelCount, waitForCanvasPixels } from './helpers';
 
 async function switchMode(page: Page, mode: string): Promise<void> {
   await waitForRenderAfter(page, () =>
@@ -9,8 +9,7 @@ async function switchMode(page: Page, mode: string): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  // Wait for the initial draw to complete
-  await page.waitForFunction(() => ((window as unknown as Record<string, number>).__renderCount ?? 0) > 0);
+  await waitForCanvasPixels(page);
 });
 
 test('rectangle mode renders non-zero pixels', async ({ page }) => {

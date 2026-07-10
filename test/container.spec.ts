@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForRenderAfter, getNonZeroPixelCount } from './helpers';
+import { waitForRenderAfter, getNonZeroPixelCount, waitForCanvasPixels } from './helpers';
 
 type TestAPI = {
   setContainerMode: (v: boolean) => void;
@@ -9,7 +9,7 @@ type TestAPI = {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.waitForFunction(() => ((window as unknown as Record<string, number>).__renderCount ?? 0) > 0);
+  await waitForCanvasPixels(page);
 });
 
 test('container mode sizes canvas to container scrollWidth and scrollHeight', async ({ page }) => {
